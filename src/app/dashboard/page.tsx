@@ -5,6 +5,7 @@ import AICoachMessage from "@/components/AICoachMessage";
 import HabitChecklist from "@/components/HabitChecklist";
 import MealPlanList from "@/components/MealPlanList";
 import ProgressRings from "@/components/ProgressRings";
+import RoadmapOverview from "@/components/RoadmapOverview";
 import WeeklyStreak from "@/components/WeeklyStreak";
 import WorkoutSubmission from "@/components/WorkoutSubmission";
 import { calculateCalorieTarget, dailyDeficitForWeeklyLoss, isLowBoneMass } from "@/domain/fitness";
@@ -12,25 +13,27 @@ import { generateVietnameseMenu } from "@/domain/menu";
 import { addCalendarDays, getCurrentWeekDateKeys, getLocalDateKey, getLocalDayRange, localDateKeyToUtc } from "@/lib/dates";
 import { getDemoUser } from "@/lib/demoUser";
 import { prisma } from "@/lib/prisma";
+import type { NutritionTargets, RoadmapPhase, WeeklyTemplateDay } from "@/services/onboardingService";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const now = new Date();
   const user = await getDemoUser();
-  if (!user.hasCompletedOnboarding) redirect("/onboarding");
+  if (!user.hasCompletedOnboarding || user.targetWeight === null) redirect("/onboarding");
 
   const today = getLocalDayRange(now);
   const weekDateKeys = getCurrentWeekDateKeys(now);
   const weekStart = localDateKeyToUtc(weekDateKeys[0]);
   const weekEnd = localDateKeyToUtc(addCalendarDays(weekDateKeys[6], 1));
-  const [todayPlan, todayWorkouts, latestInbody, todayTracker, weeklyTrackers, todayNutrition] = await Promise.all([
+  const [todayPlan, todayWorkouts, latestInbody, todayTracker, weeklyTrackers, todayNutrition, fitnessRoadmap] = await Promise.all([
     prisma.workoutPlan.findUnique({ where: { userId_date: { userId: user.id, date: today.start } } }),
     prisma.workoutLog.findMany({ where: { userId: user.id, performedAt: { gte: today.start, lt: today.end } }, orderBy: { performedAt: "desc" } }),
     prisma.inbodyHistory.findFirst({ where: { userId: user.id }, orderBy: { measuredAt: "desc" } }),
     prisma.dailyTracker.findUnique({ where: { userId_date: { userId: user.id, date: today.start } } }),
     prisma.dailyTracker.findMany({ where: { userId: user.id, date: { gte: weekStart, lt: weekEnd } }, orderBy: { date: "asc" } }),
     prisma.dailyNutrition.findUnique({ where: { userId_date: { userId: user.id, date: today.start } } }),
+    prisma.fitnessRoadmap.findUnique({ where: { userId: user.id } }),
   ]);
 
   const activeCalories = todayWorkouts.reduce((sum, workout) => sum + workout.activeCaloriesKcal, 0);
@@ -82,6 +85,21 @@ export default async function DashboardPage() {
           <MetricCard icon={Gauge} label="TDEE · Tổng tiêu hao" value={`${tdeeKcal.toLocaleString("vi-VN")} kcal`} note="Nền + sinh hoạt + vận động" color="teal" />
           <MetricCard icon={Flame} label="Mục tiêu vận động" value={`${(user.targetActiveKcal ?? 350).toLocaleString("vi-VN")} kcal`} note="Chỉ calories từ bài tập" color="orange" />
         </section>
+
+        {fitnessRoadmap && (
+          <RoadmapOverview
+            currentWeight={fitnessRoadmap.currentWeight}
+            targetWeight={fitnessRoadmap.targetWeight}
+            totalChangeKg={fitnessRoadmap.totalChangeKg}
+            recommendedWeeklyChangeKg={fitnessRoadmap.recommendedWeeklyChangeKg}
+            estimatedWeeks={fitnessRoadmap.estimatedWeeks}
+            estimatedMonths={fitnessRoadmap.estimatedMonths}
+            phases={fitnessRoadmap.phases as unknown as RoadmapPhase[]}
+            weeklyTemplate={fitnessRoadmap.weeklyTemplate as unknown as WeeklyTemplateDay[]}
+            nutrition={fitnessRoadmap.nutritionMacros as unknown as NutritionTargets}
+            aiSummary={fitnessRoadmap.aiSummary}
+          />
+        )}
 
         <WeeklyStreak days={weeklyDays} todayDateKey={today.dateKey} />
 

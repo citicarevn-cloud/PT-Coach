@@ -55,6 +55,7 @@ export default function OnboardingForm() {
           <NumberField name="age" label="Tuổi" min={16} max={100} placeholder="32" suffix="tuổi" />
           <NumberField name="height" label="Chiều cao" min={120} max={230} step="0.1" placeholder="175" suffix="cm" />
           <NumberField name="weight" label="Cân nặng" min={35} max={300} step="0.1" placeholder="77.6" suffix="kg" />
+          <NumberField name="targetWeight" label="Cân nặng mục tiêu" min={35} max={300} step="0.1" placeholder="69" suffix="kg" />
           <label className="block">
             <span className="mb-2 block text-sm font-bold text-slate-700">Mục tiêu</span>
             <select name="goal" required defaultValue="LOSE_FAT" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-100">

@@ -19,6 +19,7 @@ const profile: OnboardingInput = {
   age: 32,
   height: 175,
   weight: 77.6,
+  targetWeight: 69,
   goal: "LOSE_FAT",
   sex: "MALE",
   bodyFatPercent: 24.1,
@@ -30,33 +31,74 @@ describe("onboarding plan service", () => {
   });
 
   it("calculates Harris-Benedict baseline metrics", () => {
-    expect(calculateBaselineMetrics(profile)).toEqual({
+    expect(calculateBaselineMetrics(profile)).toMatchObject({
       bmi: 25.3,
       bmr: 1786,
       tdee: 2456,
       targetActiveKcal: 400,
+      goalAnalysis: {
+        currentWeight: 77.6,
+        targetWeight: 69,
+        totalChangeKg: 8.6,
+        recommendedWeeklyChangeKg: 0.58,
+        estimatedWeeks: 15,
+        estimatedMonths: 3.5,
+      },
+      nutrition: {
+        tdeeKcal: 2456,
+        targetCaloriesKcal: 1956,
+        proteinGrams: 155,
+        carbGrams: 195,
+        fatGrams: 62,
+      },
     });
   });
 
-  it("keeps server metrics and normalizes unsafe AI workout values", async () => {
-    const workoutPlan = Array.from({ length: 7 }, (_, index) => ({
+  it("cleans fenced JSON, keeps server metrics, and normalizes the weekly template", async () => {
+    const weeklyTemplate = Array.from({ length: 7 }, (_, index) => ({
       dayNumber: index + 1,
+      dayLabel: `Ngày ${index + 1}`,
       exerciseType: index === 6 ? "REST" : "WALK",
       targetDuration: index === 0 ? 120 : 40,
       targetKcal: index === 0 ? 800 : 300,
+      intensity: index === 6 ? "Phục hồi" : "RPE 5-6",
       aiAdvice: "Duy trì nhịp độ vừa phải và chú ý phục hồi.",
     }));
-    geminiMocks.generateContent.mockResolvedValue({ response: { text: () => JSON.stringify({
+    const phases = [1, 2, 3].map((phaseNumber) => ({
+      phaseNumber,
+      name: `Giai đoạn ${phaseNumber}`,
+      startWeek: phaseNumber * 2 - 1,
+      endWeek: phaseNumber * 2,
+      focus: "Xây dựng thói quen và tăng tiến khối lượng tập luyện an toàn.",
+      targetWeightEnd: 75 - phaseNumber,
+      progression: "Tăng nhẹ thời lượng hoặc mức kháng lực mỗi tuần.",
+      successCriteria: "Hoàn thành ít nhất tám mươi phần trăm số buổi tập.",
+    }));
+    const responseJson = JSON.stringify({
         bmi: 99,
         bmr: 9999,
         tdee: 9999,
         targetActiveKcal: 450,
-        workoutPlan,
-      }) } });
+        goalAnalysis: {
+          currentWeight: 77.6, targetWeight: 69, totalChangeKg: 8.6,
+          direction: "LOSE", recommendedWeeklyChangeKg: 0.7,
+          estimatedWeeks: 13, estimatedMonths: 3, safetyNote: "Giảm cân từ từ để bảo toàn cơ bắp và sức khỏe.",
+        },
+        nutrition: { tdeeKcal: 9999, targetCaloriesKcal: 1500, proteinGrams: 150, carbGrams: 120, fatGrams: 50 },
+        phases,
+        weeklyTemplate,
+        aiSummary: "Lộ trình giảm mỡ theo ba giai đoạn, ưu tiên tính bền vững và bảo toàn cơ bắp.",
+      });
+    geminiMocks.generateContent.mockResolvedValue({ response: { text: () => `\`\`\`json\n${responseJson}\n\`\`\`` } });
 
     const result = await generatePersonalizedPlan(profile, "test-gemini-key");
-    expect(result).toMatchObject({ bmi: 25.3, bmr: 1786, tdee: 2456, targetActiveKcal: 450 });
-    expect(result.workoutPlan[0]).toMatchObject({ targetDuration: 90, targetKcal: 600 });
-    expect(result.workoutPlan[6]).toMatchObject({ exerciseType: "REST", targetDuration: 0, targetKcal: 0 });
+    expect(result).toMatchObject({
+      bmi: 25.3, bmr: 1786, tdee: 2456, targetActiveKcal: 450,
+      goalAnalysis: { estimatedWeeks: 15, targetWeight: 69 },
+      nutrition: { targetCaloriesKcal: 1956, proteinGrams: 155 },
+    });
+    expect(result.weeklyTemplate[0]).toMatchObject({ targetDuration: 90, targetKcal: 600 });
+    expect(result.weeklyTemplate[6]).toMatchObject({ exerciseType: "REST", targetDuration: 0, targetKcal: 0 });
+    expect(result.phases.at(-1)).toMatchObject({ endWeek: 15, targetWeightEnd: 69 });
   });
 });

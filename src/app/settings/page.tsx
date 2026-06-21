@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const user = await getDemoUser();
-  const returnPath = user.hasCompletedOnboarding ? "/dashboard" : "/onboarding";
+  const returnPath = user.hasCompletedOnboarding && user.targetWeight !== null ? "/dashboard" : "/onboarding";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#ccfbf1_0,_#f8fafc_42%)] px-4 py-8 sm:py-12">

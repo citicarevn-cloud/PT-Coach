@@ -5,5 +5,5 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const user = await getDemoUser();
-  redirect(user.hasCompletedOnboarding ? "/dashboard" : "/onboarding");
+  redirect(user.hasCompletedOnboarding && user.targetWeight !== null ? "/dashboard" : "/onboarding");
 }

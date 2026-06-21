@@ -34,6 +34,7 @@ export async function POST(request: Request) {
       age: requiredNumber(formData.get("age")),
       height: requiredNumber(formData.get("height")),
       weight: ocrData?.weightKg ?? requiredNumber(formData.get("weight")),
+      targetWeight: requiredNumber(formData.get("targetWeight")),
       goal: formData.get("goal"),
       sex: user.sex,
       bodyFatPercent: ocrData?.bodyFatPercent ?? manualBodyFat,
@@ -55,6 +56,8 @@ export async function POST(request: Request) {
           height: input.height,
           heightCm: input.height,
           weight: input.weight,
+          targetWeight: input.targetWeight,
+          targetWeightKg: input.targetWeight,
           goal: input.goal,
           bmi: plan.bmi,
           bmr: plan.bmr,
@@ -76,8 +79,36 @@ export async function POST(request: Request) {
           rawOcrData: file ? { source: "ONBOARDING_GEMINI_VISION" } : { source: "ONBOARDING_MANUAL" },
         },
       });
+      await transaction.fitnessRoadmap.upsert({
+        where: { userId: user.id },
+        update: {
+          currentWeight: input.weight,
+          targetWeight: input.targetWeight,
+          totalChangeKg: plan.goalAnalysis.totalChangeKg,
+          recommendedWeeklyChangeKg: plan.goalAnalysis.recommendedWeeklyChangeKg,
+          estimatedWeeks: plan.goalAnalysis.estimatedWeeks,
+          estimatedMonths: plan.goalAnalysis.estimatedMonths,
+          phases: plan.phases,
+          weeklyTemplate: plan.weeklyTemplate,
+          nutritionMacros: plan.nutrition,
+          aiSummary: plan.aiSummary,
+        },
+        create: {
+          userId: user.id,
+          currentWeight: input.weight,
+          targetWeight: input.targetWeight,
+          totalChangeKg: plan.goalAnalysis.totalChangeKg,
+          recommendedWeeklyChangeKg: plan.goalAnalysis.recommendedWeeklyChangeKg,
+          estimatedWeeks: plan.goalAnalysis.estimatedWeeks,
+          estimatedMonths: plan.goalAnalysis.estimatedMonths,
+          phases: plan.phases,
+          weeklyTemplate: plan.weeklyTemplate,
+          nutritionMacros: plan.nutrition,
+          aiSummary: plan.aiSummary,
+        },
+      });
       await transaction.workoutPlan.createMany({
-        data: plan.workoutPlan.map((day) => ({
+        data: plan.weeklyTemplate.map((day) => ({
           userId: user.id,
           date: localDateKeyToUtc(addCalendarDays(todayKey, day.dayNumber - 1)),
           dayNumber: day.dayNumber,
