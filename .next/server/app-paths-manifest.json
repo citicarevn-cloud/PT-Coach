@@ -3,7 +3,11 @@
   "/_global-error/page": "app/_global-error/page.js",
   "/api/coach/analyze/route": "app/api/coach/analyze/route.js",
   "/api/tracker/route": "app/api/tracker/route.js",
+  "/api/workouts/route": "app/api/workouts/route.js",
   "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
   "/api/upload/route": "app/api/upload/route.js",
+  "/api/onboarding/route": "app/api/onboarding/route.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/onboarding/page": "app/onboarding/page.js",
   "/page": "app/page.js"
 }

@@ -12,21 +12,18 @@ export interface CoachWorkoutData {
   heartRateZone?: 1 | 2 | 3 | 4 | 5;
 }
 
-const fallbackWorkout: CoachWorkoutData = {
-  type: "WALK",
-  distanceKm: 6.21,
-  durationSeconds: 3685,
-  avgHeartRateBpm: 134,
-  activeCaloriesKcal: 404,
-  heartRateZone: 2,
-} as const;
-
-export default function AICoachMessage({ workout = fallbackWorkout }: { workout?: CoachWorkoutData }) {
+export default function AICoachMessage({ workout }: { workout?: CoachWorkoutData | null }) {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
   const loadAnalysis = useCallback(async (signal?: AbortSignal) => {
+    if (!workout) {
+      setMessage("Hoàn thành nhiệm vụ hôm nay rồi cập nhật kết quả, mình sẽ phân tích buổi tập cho bạn ngay tại đây.");
+      setIsLoading(false);
+      setError(false);
+      return;
+    }
     setIsLoading(true);
     setError(false);
 

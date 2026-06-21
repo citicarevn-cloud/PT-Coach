@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  OcrServiceError,
   fileToBase64,
   parseInbodyImage,
   parseWorkoutImage,
@@ -86,14 +85,14 @@ describe("OpenAI Vision OCR service", () => {
 
   it("rejects malformed JSON returned by the model", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockOpenAIResponse("```json\n{}\n```")));
-    await expect(parseInbodyImage(mockImage())).rejects.toMatchObject<OcrServiceError>({
+    await expect(parseInbodyImage(mockImage())).rejects.toMatchObject({
       code: "OCR_INVALID_RESPONSE",
     });
   });
 
   it("fails clearly when the API key is missing", async () => {
     delete process.env.OPENAI_API_KEY;
-    await expect(parseWorkoutImage(mockImage())).rejects.toMatchObject<OcrServiceError>({
+    await expect(parseWorkoutImage(mockImage())).rejects.toMatchObject({
       code: "OCR_NOT_CONFIGURED",
     });
   });

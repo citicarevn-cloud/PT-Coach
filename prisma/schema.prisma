@@ -19,7 +19,14 @@ enum ActivityType {
   CYCLING
   STRENGTH
   HIIT
+  REST
   OTHER
+}
+
+enum FitnessGoal {
+  LOSE_FAT
+  BUILD_MUSCLE
+  MAINTAIN_FITNESS
 }
 
 enum MealType {
@@ -30,43 +37,53 @@ enum MealType {
 }
 
 model User {
-  id                  String             @id @default(cuid())
-  email               String             @unique
-  name                String?
-  dateOfBirth         DateTime?
-  sex                 Sex                @default(UNSPECIFIED)
-  heightCm            Float?
-  targetWeightKg      Float?
-  targetDate          DateTime?
-  timezone            String             @default("Asia/Ho_Chi_Minh")
-  weeklyCheckInDay    Int                @default(1)
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  inbodyHistory       InbodyHistory[]
-  workoutLogs         WorkoutLog[]
-  dailyNutrition      DailyNutrition[]
-  dailyTrackers       DailyTracker[]
+  id                     String           @id @default(cuid())
+  email                  String           @unique
+  name                   String?
+  dateOfBirth            DateTime?
+  sex                    Sex              @default(UNSPECIFIED)
+  age                    Int?
+  height                 Float? // Centimeters
+  weight                 Float? // Kilograms
+  goal                   FitnessGoal?
+  bmi                    Float?
+  bmr                    Float? // Kcal per day
+  tdee                   Float? // Kcal per day, including normal activity
+  targetActiveKcal       Int? // Daily calories targeted from planned exercise only
+  hasCompletedOnboarding Boolean          @default(false)
+  heightCm               Float?
+  targetWeightKg         Float?
+  targetDate             DateTime?
+  timezone               String           @default("Asia/Ho_Chi_Minh")
+  weeklyCheckInDay       Int              @default(1)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  inbodyHistory          InbodyHistory[]
+  workoutLogs            WorkoutLog[]
+  workoutPlans           WorkoutPlan[]
+  dailyNutrition         DailyNutrition[]
+  dailyTrackers          DailyTracker[]
 }
 
 model InbodyHistory {
-  id                  String   @id @default(cuid())
-  userId              String
-  measuredAt          DateTime
-  weightKg            Float
-  bmi                 Float?
-  bodyFatPercent      Float?
-  fatMassKg           Float?
-  muscleMassKg        Float?
-  boneMassKg          Float?
-  bmrKcal             Float
-  bodyAge             Int?
-  obesityLevel        String?
-  bodyType            String?
-  sourceImageUrl      String?
-  ocrConfidence       Float?
-  rawOcrData          Json?
-  createdAt           DateTime @default(now())
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String
+  measuredAt     DateTime
+  weightKg       Float
+  bmi            Float?
+  bodyFatPercent Float?
+  fatMassKg      Float?
+  muscleMassKg   Float?
+  boneMassKg     Float?
+  bmrKcal        Float
+  bodyAge        Int?
+  obesityLevel   String?
+  bodyType       String?
+  sourceImageUrl String?
+  ocrConfidence  Float?
+  rawOcrData     Json?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, measuredAt])
 }
@@ -83,6 +100,7 @@ model WorkoutLog {
   activeCaloriesKcal  Int
   sourceImageUrl      String?
   sourceProvider      String?
+  isAiOcrInput        Boolean      @default(false)
   rawOcrData          Json?
   createdAt           DateTime     @default(now())
   user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -90,25 +108,42 @@ model WorkoutLog {
   @@index([userId, performedAt])
 }
 
+model WorkoutPlan {
+  id             String       @id @default(cuid())
+  userId         String
+  date           DateTime
+  dayNumber      Int
+  exerciseType   ActivityType
+  targetDuration Int // Minutes
+  targetKcal     Int
+  aiAdvice       String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
 model DailyNutrition {
-  id                  String   @id @default(cuid())
-  userId              String
-  date                DateTime
-  tdeeKcal            Int
-  targetCaloriesKcal  Int
-  deficitKcal         Int
-  proteinGrams        Int
-  fatGrams            Int
-  carbGrams           Int
-  calciumFocus        Boolean  @default(false)
-  meals               Json
-  consumedCalories    Int      @default(0)
-  consumedProtein     Float    @default(0)
-  consumedFat         Float    @default(0)
-  consumedCarbs       Float    @default(0)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(cuid())
+  userId             String
+  date               DateTime
+  tdeeKcal           Int
+  targetCaloriesKcal Int
+  deficitKcal        Int
+  proteinGrams       Int
+  fatGrams           Int
+  carbGrams          Int
+  calciumFocus       Boolean  @default(false)
+  meals              Json
+  consumedCalories   Int      @default(0)
+  consumedProtein    Float    @default(0)
+  consumedFat        Float    @default(0)
+  consumedCarbs      Float    @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@index([userId, date])
@@ -130,22 +165,22 @@ model DailyTracker {
 }
 
 model ExerciseLibrary {
-  id                  String       @id @default(cuid())
-  name                String
-  activityType        ActivityType
-  durationMinutes     Int?
-  sets                Int?
-  repsOrTime          String?
-  estimatedKcal       Int?
-  youtubeUrl          String
-  channelHandle       String       @default("@HubertCu")
-  formInstructions    String
-  injuryWarnings      String
-  muscleGroups        Json?
-  difficulty          String?
-  isActive            Boolean      @default(true)
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  id               String       @id @default(cuid())
+  name             String
+  activityType     ActivityType
+  durationMinutes  Int?
+  sets             Int?
+  repsOrTime       String?
+  estimatedKcal    Int?
+  youtubeUrl       String
+  channelHandle    String       @default("@HubertCu")
+  formInstructions String
+  injuryWarnings   String
+  muscleGroups     Json?
+  difficulty       String?
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@index([activityType, isActive])
 }

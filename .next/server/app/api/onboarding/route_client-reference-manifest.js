@@ -1,0 +1,1 @@
+globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST["/api/onboarding/route"]={"moduleLoading":{"prefix":"/_next/"},"ssrModuleMapping":{},"edgeSSRModuleMapping":{},"clientModules":{},"entryCSSFiles":{"/Users/tedtran/Codex/Giảm Cân/src/app/api/onboarding/route":[]},"rscModuleMapping":{},"edgeRscModuleMapping":{}};

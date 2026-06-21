@@ -4,7 +4,7 @@
   "private": true,
   "description": "Personalized fitness and nutrition coach",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "dev:api": "tsx watch src/server.ts",

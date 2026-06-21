@@ -48,6 +48,12 @@
       "namedRegex": "^/api/coach/analyze(?:/)?$"
     },
     {
+      "page": "/api/onboarding",
+      "regex": "^/api/onboarding(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/onboarding(?:/)?$"
+    },
+    {
       "page": "/api/tracker",
       "regex": "^/api/tracker(?:/)?$",
       "routeKeys": {},
@@ -60,10 +66,28 @@
       "namedRegex": "^/api/upload(?:/)?$"
     },
     {
+      "page": "/api/workouts",
+      "regex": "^/api/workouts(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/workouts(?:/)?$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
       "page": "/manifest.webmanifest",
       "regex": "^/manifest\\.webmanifest(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/manifest\\.webmanifest(?:/)?$"
+    },
+    {
+      "page": "/onboarding",
+      "regex": "^/onboarding(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/onboarding(?:/)?$"
     }
   ],
   "dataRoutes": [],

@@ -88,6 +88,7 @@ export async function POST(request: Request) {
         avgHeartRateBpm: result.avgHeartRateBpm,
         activeCaloriesKcal: result.activeCaloriesKcal,
         sourceProvider: "OPENAI_VISION",
+        isAiOcrInput: true,
         rawOcrData: fileMetadata,
       },
     });
