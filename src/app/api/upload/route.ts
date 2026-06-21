@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       mimeType: file.type,
       sizeBytes: file.size,
       provider: "gemini-vision",
-      model: "gemini-1.5-pro",
+      model: "gemini-2.5-flash",
     };
 
     if (uploadType === "inbody") {

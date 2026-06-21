@@ -6,10 +6,10 @@
   "/api/tracker/route": "app/api/tracker/route.js",
   "/api/workouts/route": "app/api/workouts/route.js",
   "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
-  "/api/upload/route": "app/api/upload/route.js",
   "/api/onboarding/route": "app/api/onboarding/route.js",
-  "/dashboard/page": "app/dashboard/page.js",
+  "/api/upload/route": "app/api/upload/route.js",
   "/onboarding/page": "app/onboarding/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/page": "app/page.js",
   "/settings/page": "app/settings/page.js"
 }

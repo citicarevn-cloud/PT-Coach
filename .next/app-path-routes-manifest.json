@@ -6,10 +6,10 @@
   "/api/tracker/route": "/api/tracker",
   "/api/workouts/route": "/api/workouts",
   "/manifest.webmanifest/route": "/manifest.webmanifest",
-  "/api/upload/route": "/api/upload",
   "/api/onboarding/route": "/api/onboarding",
-  "/dashboard/page": "/dashboard",
+  "/api/upload/route": "/api/upload",
   "/onboarding/page": "/onboarding",
+  "/dashboard/page": "/dashboard",
   "/page": "/",
   "/settings/page": "/settings"
 }

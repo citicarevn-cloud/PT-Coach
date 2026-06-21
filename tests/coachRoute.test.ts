@@ -47,7 +47,7 @@ describe("POST /api/coach/analyze", () => {
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toMatchObject({
       error: "GEMINI_KEY_REQUIRED",
-      message: expect.stringContaining("Cài đặt (Settings)"),
+      message: "Chưa cài đặt Gemini API Key",
     });
   });
 

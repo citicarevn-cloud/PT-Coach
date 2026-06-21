@@ -1,5 +1,6 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
-import { extractJsonText, GEMINI_VISION_MODEL, GeminiClientError, generateGeminiText } from "./geminiClient";
+import { extractJsonText, GEMINI_VISION_MODEL } from "./geminiClient";
 const SUPPORTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 const nullablePositiveNumber = z.number().positive().finite().nullable();
@@ -67,21 +68,42 @@ export async function parseWorkoutImage(file: File, geminiApiKey: string | null 
 }
 
 async function analyzeImage(file: File, geminiApiKey: string | null | undefined, prompt: string): Promise<string> {
-  const base64 = await fileToBase64(file);
+  assertImageFile(file);
+  const apiKey = geminiApiKey?.trim();
+  if (!apiKey) {
+    throw new OcrServiceError("OCR_NOT_CONFIGURED", "Chưa cài đặt Gemini API Key");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const imageParts = [
+    {
+      inlineData: {
+        data: buffer.toString("base64"),
+        mimeType: file.type,
+      },
+    },
+  ];
+
   try {
-    return await generateGeminiText({
-      apiKey: geminiApiKey,
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
       model: GEMINI_VISION_MODEL,
-      json: true,
-      temperature: 0,
-      maxOutputTokens: 500,
-      prompt: `Bạn là hệ thống OCR dữ liệu sức khỏe và vận động. Chỉ đọc dữ liệu nhìn thấy rõ trong ảnh. ${prompt}`,
-      image: { data: base64, mimeType: file.type },
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0,
+        maxOutputTokens: 500,
+      },
     });
-  } catch (error) {
-    if (error instanceof GeminiClientError && error.code === "GEMINI_KEY_REQUIRED") {
-      throw new OcrServiceError("OCR_NOT_CONFIGURED", error.message, { cause: error });
+    const fullPrompt = `Bạn là hệ thống OCR dữ liệu sức khỏe và vận động. Chỉ đọc dữ liệu nhìn thấy rõ trong ảnh. ${prompt}`;
+    const result = await model.generateContent([{ text: fullPrompt }, ...imageParts]);
+    const content = result.response.text().trim();
+    if (!content) {
+      throw new OcrServiceError("OCR_INVALID_RESPONSE", "Gemini Vision không trả về nội dung JSON.");
     }
+    return content;
+  } catch (error) {
+    if (error instanceof OcrServiceError) throw error;
+    console.error("Gemini Vision request failed.", error);
     throw new OcrServiceError(
       "OCR_PROVIDER_ERROR",
       "Không thể kết nối tới Gemini Vision.",

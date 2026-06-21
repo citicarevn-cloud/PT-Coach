@@ -37,7 +37,7 @@ describe("Gemini Vision OCR service", () => {
       muscleMassKg: 55.3, boneMassKg: 3, bmrKcal: 1661, bodyAge: 37,
     }));
     await expect(parseInbodyImage(mockImage(), "test-key")).resolves.toMatchObject({ weightKg: 77.6, bmrKcal: 1661 });
-    expect(geminiMocks.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({ model: "gemini-1.5-pro" }));
+    expect(geminiMocks.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({ model: "gemini-2.5-flash" }));
     expect(geminiMocks.generateContent).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ inlineData: expect.objectContaining({ mimeType: "image/png" }) }),
     ]));
@@ -61,7 +61,7 @@ describe("Gemini Vision OCR service", () => {
   it("fails clearly when the saved Gemini key is missing", async () => {
     await expect(parseWorkoutImage(mockImage(), null)).rejects.toMatchObject({
       code: "OCR_NOT_CONFIGURED",
-      message: expect.stringContaining("Cài đặt (Settings)"),
+      message: "Chưa cài đặt Gemini API Key",
     });
   });
 
