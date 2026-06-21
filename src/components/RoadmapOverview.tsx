@@ -8,9 +8,9 @@ interface RoadmapOverviewProps {
   recommendedWeeklyChangeKg: number;
   estimatedWeeks: number;
   estimatedMonths: number;
-  phases: RoadmapPhase[];
-  weeklyTemplate: WeeklyTemplateDay[];
-  nutrition: NutritionTargets;
+  phases?: RoadmapPhase[] | null;
+  weeklyTemplate?: WeeklyTemplateDay[] | null;
+  nutrition?: Partial<NutritionTargets> | null;
   aiSummary: string;
 }
 
@@ -34,18 +34,18 @@ export default function RoadmapOverview(props: RoadmapOverviewProps) {
       <div className="rounded-3xl border border-white bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2"><Utensils size={19} className="text-orange-500" /><h3 className="text-lg font-extrabold text-slate-900">Macro mỗi ngày</h3></div>
         <div className="mt-4 grid grid-cols-4 gap-2">
-          <Macro label="Calories" value={props.nutrition.targetCaloriesKcal} unit="kcal" />
-          <Macro label="Protein" value={props.nutrition.proteinGrams} unit="g" />
-          <Macro label="Carbs" value={props.nutrition.carbGrams} unit="g" />
-          <Macro label="Fat" value={props.nutrition.fatGrams} unit="g" />
+          <Macro label="Calories" value={props.nutrition?.targetCaloriesKcal ?? 0} unit="kcal" />
+          <Macro label="Protein" value={props.nutrition?.proteinGrams ?? 0} unit="g" />
+          <Macro label="Carbs" value={props.nutrition?.carbGrams ?? 0} unit="g" />
+          <Macro label="Fat" value={props.nutrition?.fatGrams ?? 0} unit="g" />
         </div>
-        <p className="mt-3 text-xs font-semibold text-slate-400">TDEE tham chiếu: {props.nutrition.tdeeKcal.toLocaleString("vi-VN")} kcal/ngày</p>
+        <p className="mt-3 text-xs font-semibold text-slate-400">TDEE tham chiếu: {(props.nutrition?.tdeeKcal ?? 0).toLocaleString("vi-VN")} kcal/ngày</p>
       </div>
 
       <div className="rounded-3xl border border-white bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2"><Flag size={19} className="text-violet-600" /><h3 className="text-lg font-extrabold text-slate-900">Các giai đoạn</h3></div>
         <div className="mt-4 space-y-3">
-          {props.phases.map((phase) => (
+          {props.phases?.map((phase) => (
             <article key={phase.phaseNumber} className="rounded-2xl bg-slate-50 p-4">
               <div className="flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-xs font-black text-white">{phase.phaseNumber}</span>
@@ -53,13 +53,15 @@ export default function RoadmapOverview(props: RoadmapOverviewProps) {
               </div>
             </article>
           ))}
+          {!props.phases?.length && <p className="rounded-xl bg-slate-50 px-3 py-4 text-center text-xs font-semibold text-slate-500">Roadmap chưa có dữ liệu giai đoạn.</p>}
         </div>
       </div>
 
       <details className="group rounded-3xl border border-white bg-white p-5 shadow-sm">
         <summary className="flex cursor-pointer list-none items-center justify-between"><span className="flex items-center gap-2 text-lg font-extrabold text-slate-900"><CalendarRange size={19} className="text-teal-600" /> Mẫu lịch tập một tuần</span><ChevronRight size={19} className="text-slate-400 transition group-open:rotate-90" /></summary>
         <div className="mt-4 space-y-2">
-          {props.weeklyTemplate.map((day) => <div key={day.dayNumber} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5"><div className="flex min-w-0 items-center gap-2"><Dumbbell size={15} className="shrink-0 text-teal-600" /><span className="truncate text-xs font-bold text-slate-700">{day.dayLabel}: {activityLabel(day.exerciseType)}</span></div><span className="shrink-0 text-[10px] font-bold text-slate-400">{day.targetDuration} phút · {day.targetKcal} kcal</span></div>)}
+          {props.weeklyTemplate?.map((day) => <div key={day.dayNumber} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5"><div className="flex min-w-0 items-center gap-2"><Dumbbell size={15} className="shrink-0 text-teal-600" /><span className="truncate text-xs font-bold text-slate-700">{day.dayLabel}: {activityLabel(day.exerciseType)}</span></div><span className="shrink-0 text-[10px] font-bold text-slate-400">{day.targetDuration} phút · {day.targetKcal} kcal</span></div>)}
+          {!props.weeklyTemplate?.length && <p className="rounded-xl bg-slate-50 px-3 py-4 text-center text-xs font-semibold text-slate-500">Weekly template chưa sẵn sàng.</p>}
         </div>
       </details>
     </section>

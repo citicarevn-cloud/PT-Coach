@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { extractJsonText, GeminiClientError, generateGeminiText } from "./geminiClient";
+import { GeminiClientError, generateGeminiText } from "./geminiClient";
 
 export const onboardingInputSchema = z.object({
   age: z.number().int().min(16).max(100),
@@ -164,7 +164,7 @@ export async function generatePersonalizedPlan(
       apiKey: geminiApiKey,
       json: true,
       temperature: 0.25,
-      maxOutputTokens: 4_096,
+      maxOutputTokens: 8_192,
       prompt: buildRoadmapPrompt(validatedInput, baseline),
     });
   } catch (error) {
@@ -176,10 +176,18 @@ export async function generatePersonalizedPlan(
 
   let parsed: unknown;
   try {
-    const cleanedText = content.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const rawText = content;
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Không tìm thấy cấu trúc JSON trong phản hồi của Gemini.");
+    }
+    const cleanedText = jsonMatch[0];
     parsed = JSON.parse(cleanedText);
   } catch (error) {
-    throw new OnboardingServiceError("AI_INVALID_RESPONSE", "Gemini trả về JSON không hợp lệ.", { cause: error });
+    const message = error instanceof Error && error.message.includes("Không tìm thấy cấu trúc JSON")
+      ? error.message
+      : "Gemini trả về JSON không hợp lệ.";
+    throw new OnboardingServiceError("AI_INVALID_RESPONSE", message, { cause: error });
   }
 
   const result = aiRoadmapResponseSchema.safeParse(parsed);
@@ -259,6 +267,7 @@ function buildRoadmapPrompt(input: OnboardingInput, baseline: ReturnType<typeof 
         aiSummary: "Vietnamese roadmap summary",
       },
     }),
+    "CRITICAL RULE: DO NOT OUTPUT ANY MARKDOWN, NO CONVERSATIONAL TEXT, NO BACKTICKS. OUTPUT ONLY A RAW, VALID JSON OBJECT STARTING WITH { AND ENDING WITH }.",
   ].join(" ");
 }
 

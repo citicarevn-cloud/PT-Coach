@@ -94,9 +94,9 @@ export default async function DashboardPage() {
             recommendedWeeklyChangeKg={fitnessRoadmap.recommendedWeeklyChangeKg}
             estimatedWeeks={fitnessRoadmap.estimatedWeeks}
             estimatedMonths={fitnessRoadmap.estimatedMonths}
-            phases={fitnessRoadmap.phases as unknown as RoadmapPhase[]}
-            weeklyTemplate={fitnessRoadmap.weeklyTemplate as unknown as WeeklyTemplateDay[]}
-            nutrition={fitnessRoadmap.nutritionMacros as unknown as NutritionTargets}
+            phases={Array.isArray(fitnessRoadmap.phases) ? fitnessRoadmap.phases as unknown as RoadmapPhase[] : []}
+            weeklyTemplate={Array.isArray(fitnessRoadmap.weeklyTemplate) ? fitnessRoadmap.weeklyTemplate as unknown as WeeklyTemplateDay[] : []}
+            nutrition={isJsonObject(fitnessRoadmap.nutritionMacros) ? fitnessRoadmap.nutritionMacros as unknown as Partial<NutritionTargets> : null}
             aiSummary={fitnessRoadmap.aiSummary}
           />
         )}
@@ -154,4 +154,8 @@ function toTrackableActivity(type?: string): "WALK" | "RUN" | "CYCLING" | "STREN
 function createSeededRandom(seedText: string): () => number {
   let seed = Array.from(seedText).reduce((value, character) => ((value * 31) + character.charCodeAt(0)) >>> 0, 2166136261);
   return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

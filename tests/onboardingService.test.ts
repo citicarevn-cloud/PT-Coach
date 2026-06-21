@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const geminiMocks = vi.hoisted(() => ({ generateContent: vi.fn() }));
+const geminiMocks = vi.hoisted(() => ({ generateContent: vi.fn(), getGenerativeModel: vi.fn() }));
 
 vi.mock("@google/generative-ai", () => ({
   GoogleGenerativeAI: class {
-    getGenerativeModel() {
+    getGenerativeModel(config: unknown) {
+      geminiMocks.getGenerativeModel(config);
       return { generateContent: geminiMocks.generateContent };
     }
   },
@@ -89,7 +90,9 @@ describe("onboarding plan service", () => {
         weeklyTemplate,
         aiSummary: "Lộ trình giảm mỡ theo ba giai đoạn, ưu tiên tính bền vững và bảo toàn cơ bắp.",
       });
-    geminiMocks.generateContent.mockResolvedValue({ response: { text: () => `\`\`\`json\n${responseJson}\n\`\`\`` } });
+    geminiMocks.generateContent.mockResolvedValue({
+      response: { text: () => `Đây là lộ trình được đề xuất:\n\`\`\`json\n${responseJson}\n\`\`\`\nChúc bạn thành công!` },
+    });
 
     const result = await generatePersonalizedPlan(profile, "test-gemini-key");
     expect(result).toMatchObject({
@@ -100,5 +103,22 @@ describe("onboarding plan service", () => {
     expect(result.weeklyTemplate[0]).toMatchObject({ targetDuration: 90, targetKcal: 600 });
     expect(result.weeklyTemplate[6]).toMatchObject({ exerciseType: "REST", targetDuration: 0, targetKcal: 0 });
     expect(result.phases.at(-1)).toMatchObject({ endWeek: 15, targetWeightEnd: 69 });
+    expect(geminiMocks.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({
+      generationConfig: expect.objectContaining({
+        responseMimeType: "application/json",
+        maxOutputTokens: 8_192,
+      }),
+    }));
+    const prompt = geminiMocks.generateContent.mock.calls[0]?.[0];
+    expect(prompt).toBeTypeOf("string");
+    expect(prompt).toMatch(/CRITICAL RULE: DO NOT OUTPUT ANY MARKDOWN.*ENDING WITH \}\.$/);
+  });
+
+  it("returns a clear error when Gemini response contains no JSON object", async () => {
+    geminiMocks.generateContent.mockResolvedValue({ response: { text: () => "Không thể tạo lộ trình lúc này." } });
+    await expect(generatePersonalizedPlan(profile, "test-gemini-key")).rejects.toMatchObject({
+      code: "AI_INVALID_RESPONSE",
+      message: "Không tìm thấy cấu trúc JSON trong phản hồi của Gemini.",
+    });
   });
 });

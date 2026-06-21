@@ -8,8 +8,8 @@
   "/manifest.webmanifest/route": "/manifest.webmanifest",
   "/api/upload/route": "/api/upload",
   "/api/onboarding/route": "/api/onboarding",
-  "/dashboard/page": "/dashboard",
   "/onboarding/page": "/onboarding",
+  "/dashboard/page": "/dashboard",
   "/page": "/",
   "/settings/page": "/settings"
 }
