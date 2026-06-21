@@ -5,7 +5,8 @@
   "description": "Personalized fitness and nutrition coach",
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "build": "prisma generate && next build --webpack",
+    "postinstall": "prisma generate",
     "start": "next start",
     "dev:api": "tsx watch src/server.ts",
     "build:api": "tsc -p tsconfig.api.json",

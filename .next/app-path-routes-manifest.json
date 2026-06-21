@@ -5,8 +5,8 @@
   "/api/tracker/route": "/api/tracker",
   "/api/workouts/route": "/api/workouts",
   "/manifest.webmanifest/route": "/manifest.webmanifest",
-  "/api/upload/route": "/api/upload",
   "/api/onboarding/route": "/api/onboarding",
+  "/api/upload/route": "/api/upload",
   "/dashboard/page": "/dashboard",
   "/onboarding/page": "/onboarding",
   "/page": "/"
