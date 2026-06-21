@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GeminiClientError, generateGeminiText } from "./geminiClient";
+import { extractAndParseJSON } from "../utils/aiHelper";
 
 export const onboardingInputSchema = z.object({
   age: z.number().int().min(16).max(100),
@@ -176,18 +177,13 @@ export async function generatePersonalizedPlan(
 
   let parsed: unknown;
   try {
-    const rawText = content;
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Không tìm thấy cấu trúc JSON trong phản hồi của Gemini.");
-    }
-    const cleanedText = jsonMatch[0];
-    parsed = JSON.parse(cleanedText);
+    parsed = extractAndParseJSON(content);
   } catch (error) {
-    const message = error instanceof Error && error.message.includes("Không tìm thấy cấu trúc JSON")
-      ? error.message
-      : "Gemini trả về JSON không hợp lệ.";
-    throw new OnboardingServiceError("AI_INVALID_RESPONSE", message, { cause: error });
+    throw new OnboardingServiceError(
+      "AI_INVALID_RESPONSE",
+      "Dữ liệu trả về không đúng định dạng JSON.",
+      { cause: error },
+    );
   }
 
   const result = aiRoadmapResponseSchema.safeParse(parsed);
@@ -267,6 +263,7 @@ function buildRoadmapPrompt(input: OnboardingInput, baseline: ReturnType<typeof 
         aiSummary: "Vietnamese roadmap summary",
       },
     }),
+    "OUTPUT RAW JSON ONLY. NO MARKDOWN, NO GREETINGS.",
     "CRITICAL RULE: DO NOT OUTPUT ANY MARKDOWN, NO CONVERSATIONAL TEXT, NO BACKTICKS. OUTPUT ONLY A RAW, VALID JSON OBJECT STARTING WITH { AND ENDING WITH }.",
   ].join(" ");
 }

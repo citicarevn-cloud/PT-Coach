@@ -3,6 +3,7 @@
 import { Bot, RefreshCw, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { friendlyApiError } from "@/utils/clientError";
 
 export interface CoachWorkoutData {
   type: "WALK" | "RUN" | "CYCLING" | "STRENGTH" | "HIIT" | "OTHER";
@@ -35,8 +36,8 @@ export default function AICoachMessage({ workout }: { workout?: CoachWorkoutData
         body: JSON.stringify(workout),
         signal,
       });
-      const data = await response.json() as { message?: string };
-      if (!response.ok) throw new Error(data.message || "Không thể tải phân tích");
+      const data = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(friendlyApiError(data.error, data.message, "Không thể tải phân tích"));
       if (!data.message) throw new Error("Phản hồi không có nội dung");
       setMessage(data.message);
     } catch (requestError) {

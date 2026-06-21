@@ -32,15 +32,20 @@ describe("Gemini Vision OCR service", () => {
   });
 
   it("extracts and validates Inbody JSON with Gemini Pro vision", async () => {
-    mockGeminiText(JSON.stringify({
+    mockGeminiText(`Kết quả OCR:\n\`\`\`json\n${JSON.stringify({
       weightKg: 77.6, bmi: 25, bodyFatPercent: 24.1, fatMassKg: 18.7,
       muscleMassKg: 55.3, boneMassKg: 3, bmrKcal: 1661, bodyAge: 37,
-    }));
+    })}\n\`\`\``);
     await expect(parseInbodyImage(mockImage(), "test-key")).resolves.toMatchObject({ weightKg: 77.6, bmrKcal: 1661 });
-    expect(geminiMocks.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({ model: "gemini-2.5-flash" }));
+    expect(geminiMocks.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({
+      model: "gemini-2.5-flash",
+      generationConfig: expect.objectContaining({ responseMimeType: "application/json" }),
+    }));
     expect(geminiMocks.generateContent).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ inlineData: expect.objectContaining({ mimeType: "image/png" }) }),
     ]));
+    const contentParts = geminiMocks.generateContent.mock.calls[0]?.[0] as Array<{ text?: string }>;
+    expect(contentParts[0]?.text).toMatch(/OUTPUT RAW JSON ONLY\. NO MARKDOWN, NO GREETINGS\.$/);
   });
 
   it("extracts workout JSON", async () => {
@@ -54,6 +59,7 @@ describe("Gemini Vision OCR service", () => {
   });
 
   it("rejects malformed JSON returned by Gemini", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     mockGeminiText("not-json");
     await expect(parseInbodyImage(mockImage(), "test-key")).rejects.toMatchObject({ code: "OCR_INVALID_RESPONSE" });
   });

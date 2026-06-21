@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
-import { extractJsonText, GEMINI_VISION_MODEL } from "./geminiClient";
+import { GEMINI_VISION_MODEL } from "./geminiClient";
+import { extractAndParseJSON } from "../utils/aiHelper";
 const SUPPORTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 const nullablePositiveNumber = z.number().positive().finite().nullable();
@@ -94,7 +95,7 @@ async function analyzeImage(file: File, geminiApiKey: string | null | undefined,
         maxOutputTokens: 500,
       },
     });
-    const fullPrompt = `Bạn là hệ thống OCR dữ liệu sức khỏe và vận động. Chỉ đọc dữ liệu nhìn thấy rõ trong ảnh. ${prompt}`;
+    const fullPrompt = `Bạn là hệ thống OCR dữ liệu sức khỏe và vận động. Chỉ đọc dữ liệu nhìn thấy rõ trong ảnh. ${prompt} OUTPUT RAW JSON ONLY. NO MARKDOWN, NO GREETINGS.`;
     const result = await model.generateContent([{ text: fullPrompt }, ...imageParts]);
     const content = result.response.text().trim();
     if (!content) {
@@ -115,7 +116,7 @@ async function analyzeImage(file: File, geminiApiKey: string | null | undefined,
 function parseAndValidateJson<T>(content: string, schema: z.ZodType<T>): T {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(extractJsonText(content));
+    parsed = extractAndParseJSON(content);
   } catch (error) {
     throw new OcrServiceError(
       "OCR_INVALID_RESPONSE",

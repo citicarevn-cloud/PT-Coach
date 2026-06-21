@@ -9,7 +9,7 @@
   "/api/upload/route": "/api/upload",
   "/api/onboarding/route": "/api/onboarding",
   "/onboarding/page": "/onboarding",
-  "/dashboard/page": "/dashboard",
   "/page": "/",
-  "/settings/page": "/settings"
+  "/settings/page": "/settings",
+  "/dashboard/page": "/dashboard"
 }

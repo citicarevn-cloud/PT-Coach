@@ -115,10 +115,11 @@ describe("onboarding plan service", () => {
   });
 
   it("returns a clear error when Gemini response contains no JSON object", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     geminiMocks.generateContent.mockResolvedValue({ response: { text: () => "Không thể tạo lộ trình lúc này." } });
     await expect(generatePersonalizedPlan(profile, "test-gemini-key")).rejects.toMatchObject({
       code: "AI_INVALID_RESPONSE",
-      message: "Không tìm thấy cấu trúc JSON trong phản hồi của Gemini.",
+      message: "Dữ liệu trả về không đúng định dạng JSON.",
     });
   });
 });

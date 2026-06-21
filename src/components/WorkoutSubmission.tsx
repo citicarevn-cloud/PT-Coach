@@ -3,6 +3,7 @@
 import { Camera, CheckCircle2, Edit3, HeartPulse, LoaderCircle, Timer, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { friendlyApiError } from "@/utils/clientError";
 
 type SubmissionMode = "vision" | "manual";
 type ActivityType = "WALK" | "RUN" | "CYCLING" | "STRENGTH" | "HIIT" | "OTHER";
@@ -23,7 +24,7 @@ export default function WorkoutSubmission({ suggestedType }: { suggestedType: Ac
     try {
       const response = await fetch("/api/upload", { method: "POST", body: formData });
       const payload = await response.json() as { success?: boolean; message?: string; error?: string };
-      if (!response.ok || !payload.success) throw new Error(payload.message || payload.error || "UPLOAD_FAILED");
+      if (!response.ok || !payload.success) throw new Error(friendlyApiError(payload.error, payload.message));
       setStatus({ type: "success", message: "AI đã đọc và lưu kết quả buổi tập." });
       router.refresh();
     } catch (error) {

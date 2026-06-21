@@ -3,6 +3,7 @@
 import { Activity, Camera, Check, ChevronRight, Dumbbell, LoaderCircle, Scale, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { friendlyApiError } from "@/utils/clientError";
 
 type InbodyMode = "photo" | "manual";
 
@@ -30,7 +31,7 @@ export default function OnboardingForm() {
       const response = await fetch("/api/onboarding", { method: "POST", body: formData });
       const payload = await response.json() as { success?: boolean; message?: string; error?: string };
       if (!response.ok || !payload.success) {
-        throw new Error(payload.message || friendlyError(payload.error));
+        throw new Error(friendlyApiError(payload.error, payload.message, "Chưa thể tạo kế hoạch. Vui lòng thử lại."));
       }
       router.replace("/dashboard");
       router.refresh();
@@ -123,10 +124,4 @@ function NumberField({ name, label, min, max, step = "1", placeholder, suffix, r
 
 function ModeButton({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: typeof Camera; label: string }) {
   return <button type="button" onClick={onClick} className={`flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold transition ${active ? "bg-white text-teal-700 shadow-sm" : "text-slate-500"}`}><Icon size={16} />{label}</button>;
-}
-
-function friendlyError(code?: string): string {
-  if (code === "AI_NOT_CONFIGURED") return "Vui lòng vào mục Cài đặt (Settings) để nhập Gemini API Key trước khi sử dụng.";
-  if (code === "INVALID_ONBOARDING_DATA") return "Một vài thông tin chưa hợp lệ. Hãy kiểm tra lại.";
-  return "Chưa thể tạo kế hoạch. Vui lòng thử lại.";
 }

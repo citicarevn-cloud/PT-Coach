@@ -3,6 +3,7 @@
 import { Activity, CheckCircle2, Scale, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { friendlyApiError } from "@/utils/clientError";
 
 type UploadType = "inbody" | "workout";
 
@@ -24,7 +25,7 @@ export default function ImageUpload() {
 
       const response = await fetch("/api/upload", { method: "POST", body: formData });
       const payload = await response.json() as { success?: boolean; error?: string; message?: string };
-      if (!response.ok || !payload.success) throw new Error(payload.message || payload.error || "UPLOAD_FAILED");
+      if (!response.ok || !payload.success) throw new Error(friendlyApiError(payload.error, payload.message));
 
       setStatus({
         type: "success",
