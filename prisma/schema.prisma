@@ -51,6 +51,7 @@ model User {
   tdee                   Float? // Kcal per day, including normal activity
   targetActiveKcal       Int? // Daily calories targeted from planned exercise only
   hasCompletedOnboarding Boolean          @default(false)
+  geminiApiKey           String?
   heightCm               Float?
   targetWeightKg         Float?
   targetDate             DateTime?

@@ -1,4 +1,5 @@
-import { ArrowRight, BrainCircuit, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BrainCircuit, Settings, ShieldCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import OnboardingForm from "@/components/OnboardingForm";
 import { getDemoUser } from "@/lib/demoUser";
@@ -17,6 +18,7 @@ export default async function OnboardingPage() {
           <p className="mt-5 text-xs font-extrabold tracking-[0.2em] text-teal-700 uppercase">Ted Fit Coach</p>
           <h1 className="mt-2 text-3xl leading-tight font-black tracking-tight text-slate-950 sm:text-4xl">Một kế hoạch thực sự dành cho bạn</h1>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-600">Cho AI vài chỉ số cơ bản. Bạn sẽ nhận mục tiêu active calories hợp lý và lịch tập 7 ngày có ngày phục hồi.</p>
+          <Link href="/settings" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-extrabold text-teal-700 shadow-sm"><Settings size={15} /> Cài đặt Gemini API Key</Link>
         </header>
 
         <div className="mb-6 grid grid-cols-3 gap-2">

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getDemoUser } from "../../../../lib/demoUser";
 import { analyzeWorkoutSession } from "../../../../services/aiCoachService";
+import { GeminiClientError } from "../../../../services/geminiClient";
 
 const workoutSessionSchema = z.object({
   type: z.enum(["WALK", "RUN", "CYCLING", "STRENGTH", "HIIT", "OTHER"]),
@@ -29,12 +31,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const message = await analyzeWorkoutSession(parsed.data);
+    const user = await getDemoUser();
+    const message = await analyzeWorkoutSession(parsed.data, user.geminiApiKey);
     return NextResponse.json({ message });
-  } catch {
+  } catch (error) {
+    if (error instanceof GeminiClientError) {
+      return NextResponse.json(
+        { error: error.code, message: error.message },
+        { status: error.code === "GEMINI_KEY_REQUIRED" ? 503 : 502 },
+      );
+    }
+    console.error("Gemini coach analysis failed.", error);
     return NextResponse.json(
-      { error: "INVALID_JSON", message: "Request body phải là JSON hợp lệ." },
-      { status: 400 },
+      { error: "COACH_ANALYSIS_FAILED", message: "Chưa thể phân tích buổi tập." },
+      { status: 500 },
     );
   }
 }

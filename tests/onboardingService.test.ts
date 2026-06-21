@@ -1,11 +1,20 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const geminiMocks = vi.hoisted(() => ({ generateContent: vi.fn() }));
+
+vi.mock("@google/generative-ai", () => ({
+  GoogleGenerativeAI: class {
+    getGenerativeModel() {
+      return { generateContent: geminiMocks.generateContent };
+    }
+  },
+}));
 import {
   calculateBaselineMetrics,
   generatePersonalizedPlan,
   type OnboardingInput,
 } from "../src/services/onboardingService.js";
 
-const originalApiKey = process.env.OPENAI_API_KEY;
 const profile: OnboardingInput = {
   age: 32,
   height: 175,
@@ -16,14 +25,8 @@ const profile: OnboardingInput = {
 };
 
 describe("onboarding plan service", () => {
-  beforeEach(() => {
-    process.env.OPENAI_API_KEY = "test-key";
-  });
-
   afterEach(() => {
-    vi.unstubAllGlobals();
-    if (originalApiKey === undefined) delete process.env.OPENAI_API_KEY;
-    else process.env.OPENAI_API_KEY = originalApiKey;
+    vi.clearAllMocks();
   });
 
   it("calculates Harris-Benedict baseline metrics", () => {
@@ -43,17 +46,15 @@ describe("onboarding plan service", () => {
       targetKcal: index === 0 ? 800 : 300,
       aiAdvice: "Duy trì nhịp độ vừa phải và chú ý phục hồi.",
     }));
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      choices: [{ message: { content: JSON.stringify({
+    geminiMocks.generateContent.mockResolvedValue({ response: { text: () => JSON.stringify({
         bmi: 99,
         bmr: 9999,
         tdee: 9999,
         targetActiveKcal: 450,
         workoutPlan,
-      }) } }],
-    }), { status: 200, headers: { "Content-Type": "application/json" } })));
+      }) } });
 
-    const result = await generatePersonalizedPlan(profile);
+    const result = await generatePersonalizedPlan(profile, "test-gemini-key");
     expect(result).toMatchObject({ bmi: 25.3, bmr: 1786, tdee: 2456, targetActiveKcal: 450 });
     expect(result.workoutPlan[0]).toMatchObject({ targetDuration: 90, targetKcal: 600 });
     expect(result.workoutPlan[6]).toMatchObject({ exerciseType: "REST", targetDuration: 0, targetKcal: 0 });

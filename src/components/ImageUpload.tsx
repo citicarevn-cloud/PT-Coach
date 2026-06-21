@@ -23,8 +23,8 @@ export default function ImageUpload() {
       formData.append("uploadType", uploadType);
 
       const response = await fetch("/api/upload", { method: "POST", body: formData });
-      const payload = await response.json() as { success?: boolean; error?: string };
-      if (!response.ok || !payload.success) throw new Error(payload.error || "UPLOAD_FAILED");
+      const payload = await response.json() as { success?: boolean; error?: string; message?: string };
+      if (!response.ok || !payload.success) throw new Error(payload.message || payload.error || "UPLOAD_FAILED");
 
       setStatus({
         type: "success",
@@ -33,8 +33,11 @@ export default function ImageUpload() {
           : "Đã phân tích và lưu kết quả tập luyện.",
       });
       router.refresh();
-    } catch {
-      setStatus({ type: "error", message: "Chưa thể xử lý ảnh. Vui lòng thử lại." });
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message: error instanceof Error ? error.message : "Chưa thể xử lý ảnh. Vui lòng thử lại.",
+      });
     } finally {
       setUploadingType(null);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Bot, RefreshCw, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 export interface CoachWorkoutData {
@@ -15,17 +16,17 @@ export interface CoachWorkoutData {
 export default function AICoachMessage({ workout }: { workout?: CoachWorkoutData | null }) {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadAnalysis = useCallback(async (signal?: AbortSignal) => {
     if (!workout) {
       setMessage("Hoàn thành nhiệm vụ hôm nay rồi cập nhật kết quả, mình sẽ phân tích buổi tập cho bạn ngay tại đây.");
       setIsLoading(false);
-      setError(false);
+      setError(null);
       return;
     }
     setIsLoading(true);
-    setError(false);
+    setError(null);
 
     try {
       const response = await fetch("/api/coach/analyze", {
@@ -34,14 +35,13 @@ export default function AICoachMessage({ workout }: { workout?: CoachWorkoutData
         body: JSON.stringify(workout),
         signal,
       });
-      if (!response.ok) throw new Error("Không thể tải phân tích");
-
       const data = await response.json() as { message?: string };
+      if (!response.ok) throw new Error(data.message || "Không thể tải phân tích");
       if (!data.message) throw new Error("Phản hồi không có nội dung");
       setMessage(data.message);
     } catch (requestError) {
       if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-      setError(true);
+      setError(requestError instanceof Error ? requestError.message : "Không thể tải phân tích");
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
@@ -94,7 +94,8 @@ export default function AICoachMessage({ workout }: { workout?: CoachWorkoutData
 
             {!isLoading && error && (
               <div>
-                <p className="text-sm text-rose-700">Coach chưa thể gửi phân tích. Hãy thử lại sau một chút.</p>
+                <p className="text-sm text-rose-700">{error}</p>
+                <Link href="/settings" className="mt-3 mr-2 inline-flex items-center rounded-xl bg-teal-600 px-3 py-2 text-xs font-bold text-white">Mở Settings</Link>
                 <button
                   type="button"
                   onClick={() => void loadAnalysis()}

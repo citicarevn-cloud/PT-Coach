@@ -26,8 +26,13 @@ export default function WorkoutSubmission({ suggestedType }: { suggestedType: Ac
       if (!response.ok || !payload.success) throw new Error(payload.message || payload.error || "UPLOAD_FAILED");
       setStatus({ type: "success", message: "AI đã đọc và lưu kết quả buổi tập." });
       router.refresh();
-    } catch {
-      setStatus({ type: "error", message: "Chưa thể đọc ảnh. Hãy thử ảnh rõ hơn hoặc nhập tay." });
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message: error instanceof Error
+          ? error.message
+          : "Chưa thể đọc ảnh. Hãy thử ảnh rõ hơn hoặc nhập tay.",
+      });
     } finally {
       setIsSubmitting(false);
     }

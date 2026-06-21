@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions";
+import { extractJsonText, GeminiClientError, generateGeminiText } from "./geminiClient";
 
 export const onboardingInputSchema = z.object({
   age: z.number().int().min(16).max(100),
@@ -40,11 +39,6 @@ export interface PersonalizedPlan {
   workoutPlan: GeneratedWorkoutDay[];
 }
 
-interface OpenAIResponse {
-  choices?: Array<{ message?: { content?: string | null } }>;
-  error?: { message?: string };
-}
-
 export class OnboardingServiceError extends Error {
   constructor(
     public readonly code: "AI_NOT_CONFIGURED" | "AI_PROVIDER_ERROR" | "AI_INVALID_RESPONSE",
@@ -80,93 +74,59 @@ export function calculateBaselineMetrics(input: OnboardingInput) {
   };
 }
 
-export async function generatePersonalizedPlan(input: OnboardingInput): Promise<PersonalizedPlan> {
+export async function generatePersonalizedPlan(
+  input: OnboardingInput,
+  geminiApiKey: string | null | undefined,
+): Promise<PersonalizedPlan> {
   const validatedInput = onboardingInputSchema.parse(input);
   const baseline = calculateBaselineMetrics(validatedInput);
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    throw new OnboardingServiceError("AI_NOT_CONFIGURED", "OPENAI_API_KEY chưa được cấu hình.");
-  }
-
-  let response: Response;
+  let content: string;
   try {
-    response = await fetch(OPENAI_CHAT_COMPLETIONS_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: [
-              "Bạn là chuyên gia lập kế hoạch fitness an toàn.",
-              "Chỉ trả về một JSON object hợp lệ, không markdown.",
-              "Tạo đúng 7 ngày, xen kẽ vận động nhẹ, kháng lực và nghỉ phục hồi.",
-              "Không kê chẩn đoán y khoa và không đặt mục tiêu active calories quá 600 kcal/ngày.",
-            ].join(" "),
+    content = await generateGeminiText({
+      apiKey: geminiApiKey,
+      json: true,
+      temperature: 0.3,
+      maxOutputTokens: 1_500,
+      prompt: [
+        "Bạn là chuyên gia lập kế hoạch fitness an toàn.",
+        "Chỉ trả về một JSON object hợp lệ, không markdown.",
+        "Tạo đúng 7 ngày, xen kẽ vận động nhẹ, kháng lực và nghỉ phục hồi.",
+        "Không kê chẩn đoán y khoa và không đặt mục tiêu active calories quá 600 kcal/ngày.",
+        JSON.stringify({
+          request: "Xác nhận BMI/BMR Harris-Benedict/TDEE và tạo lịch tập 7 ngày cá nhân hóa.",
+          profile: validatedInput,
+          serverCalculatedBaseline: baseline,
+          assumptions: { tdeeActivityFactor: 1.375, activeCaloriesAreWorkoutOnly: true },
+          requiredJsonShape: {
+            bmi: "number",
+            bmr: "number",
+            tdee: "number",
+            targetActiveKcal: "integer 200-600",
+            workoutPlan: [{
+              dayNumber: "integer 1-7",
+              exerciseType: "WALK|RUN|CYCLING|STRENGTH|HIIT|REST|OTHER",
+              targetDuration: "minutes",
+              targetKcal: "workout kcal; 0 on REST",
+              aiAdvice: "short Vietnamese advice",
+            }],
           },
-          {
-            role: "user",
-            content: JSON.stringify({
-              request: "Xác nhận BMI/BMR Harris-Benedict/TDEE và tạo lịch tập 7 ngày cá nhân hóa.",
-              profile: validatedInput,
-              serverCalculatedBaseline: baseline,
-              assumptions: {
-                tdeeActivityFactor: 1.375,
-                activeCaloriesAreWorkoutOnly: true,
-              },
-              requiredJsonShape: {
-                bmi: "number",
-                bmr: "number",
-                tdee: "number",
-                targetActiveKcal: "integer 200-600",
-                workoutPlan: [{
-                  dayNumber: "integer 1-7",
-                  exerciseType: "WALK|RUN|CYCLING|STRENGTH|HIIT|REST|OTHER",
-                  targetDuration: "minutes",
-                  targetKcal: "workout kcal; 0 on REST",
-                  aiAdvice: "short Vietnamese advice",
-                }],
-              },
-            }),
-          },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 1_500,
-      }),
-      signal: AbortSignal.timeout(45_000),
+        }),
+      ].join(" "),
     });
   } catch (error) {
+    if (error instanceof GeminiClientError && error.code === "GEMINI_KEY_REQUIRED") {
+      throw new OnboardingServiceError("AI_NOT_CONFIGURED", error.message, { cause: error });
+    }
     throw new OnboardingServiceError(
       "AI_PROVIDER_ERROR",
-      "Không thể kết nối tới OpenAI để tạo kế hoạch.",
+      "Không thể kết nối tới Gemini để tạo kế hoạch.",
       { cause: error },
     );
   }
 
-  let payload: OpenAIResponse;
-  try {
-    payload = await response.json() as OpenAIResponse;
-  } catch (error) {
-    throw new OnboardingServiceError("AI_INVALID_RESPONSE", "OpenAI không trả về JSON hợp lệ.", { cause: error });
-  }
-  if (!response.ok) {
-    throw new OnboardingServiceError(
-      "AI_PROVIDER_ERROR",
-      payload.error?.message || `OpenAI trả về HTTP ${response.status}.`,
-    );
-  }
-
-  const content = payload.choices?.[0]?.message?.content;
-  if (!content) throw new OnboardingServiceError("AI_INVALID_RESPONSE", "OpenAI không trả về kế hoạch.");
-
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(extractJsonText(content));
   } catch (error) {
     throw new OnboardingServiceError("AI_INVALID_RESPONSE", "Kế hoạch AI không phải JSON hợp lệ.", { cause: error });
   }

@@ -1,4 +1,5 @@
-import { Bell, CalendarCheck2, Flame, Gauge, Sparkles, Timer, Trophy } from "lucide-react";
+import { CalendarCheck2, Flame, Gauge, Settings, Sparkles, Timer, Trophy } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import AICoachMessage from "@/components/AICoachMessage";
 import HabitChecklist from "@/components/HabitChecklist";
@@ -72,7 +73,7 @@ export default async function DashboardPage() {
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-sm"><Sparkles size={21} /></div>
             <div className="min-w-0"><p className="text-xs font-bold tracking-wide text-teal-700 uppercase">Ted Fit Coach</p><h1 className="truncate text-lg font-extrabold text-slate-900">Chào {name}, sẵn sàng vận động?</h1></div>
           </div>
-          <button type="button" aria-label="Thông báo" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Bell size={19} /></button>
+          <Link href="/settings" aria-label="Cài đặt Gemini" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-teal-50 hover:text-teal-700"><Settings size={19} /></Link>
         </div>
       </header>
 

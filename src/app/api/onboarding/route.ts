@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const manualBodyFat = optionalNumber(formData.get("bodyFatPercent"));
     const manualMuscleMass = optionalNumber(formData.get("muscleMassKg"));
     const manualBoneMass = optionalNumber(formData.get("boneMassKg"));
-    const ocrData = file ? await parseInbodyImage(file) : null;
+    const ocrData = file ? await parseInbodyImage(file, user.geminiApiKey) : null;
     const input = onboardingInputSchema.parse({
       age: requiredNumber(formData.get("age")),
       height: requiredNumber(formData.get("height")),
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       muscleMassKg: ocrData?.muscleMassKg ?? manualMuscleMass,
       boneMassKg: ocrData?.boneMassKg ?? manualBoneMass,
     });
-    const plan = await generatePersonalizedPlan(input);
+    const plan = await generatePersonalizedPlan(input, user.geminiApiKey);
     const todayKey = getLocalDateKey();
     const firstPlanDate = localDateKeyToUtc(todayKey);
 
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
           muscleMassKg: input.muscleMassKg,
           boneMassKg: input.boneMassKg,
           bmrKcal: plan.bmr,
-          rawOcrData: file ? { source: "ONBOARDING_OPENAI_VISION" } : { source: "ONBOARDING_MANUAL" },
+          rawOcrData: file ? { source: "ONBOARDING_GEMINI_VISION" } : { source: "ONBOARDING_MANUAL" },
         },
       });
       await transaction.workoutPlan.createMany({

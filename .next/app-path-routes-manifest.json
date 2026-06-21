@@ -2,12 +2,14 @@
   "/_not-found/page": "/_not-found",
   "/_global-error/page": "/_global-error",
   "/api/coach/analyze/route": "/api/coach/analyze",
+  "/api/settings/route": "/api/settings",
   "/api/tracker/route": "/api/tracker",
   "/api/workouts/route": "/api/workouts",
   "/manifest.webmanifest/route": "/manifest.webmanifest",
-  "/api/onboarding/route": "/api/onboarding",
   "/api/upload/route": "/api/upload",
+  "/api/onboarding/route": "/api/onboarding",
   "/dashboard/page": "/dashboard",
   "/onboarding/page": "/onboarding",
-  "/page": "/"
+  "/page": "/",
+  "/settings/page": "/settings"
 }

@@ -30,25 +30,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "INVALID_FILE_SIZE" }, { status: 400 });
     }
 
+    const user = await getDemoUser();
+
     const fileMetadata = {
       fileName: file.name,
       mimeType: file.type,
       sizeBytes: file.size,
-      provider: "openai-vision",
-      model: process.env.OPENAI_VISION_MODEL?.trim()
-        || process.env.OPENAI_MODEL?.trim()
-        || "gpt-4o-mini",
+      provider: "gemini-vision",
+      model: "gemini-1.5-pro",
     };
 
     if (uploadType === "inbody") {
-      const result = await parseInbodyImage(file);
+      const result = await parseInbodyImage(file, user.geminiApiKey);
       if (result.weightKg === null || result.bmrKcal === null) {
         return NextResponse.json(
           { success: false, error: "INBODY_REQUIRED_FIELDS_MISSING", data: result },
           { status: 422 },
         );
       }
-      const user = await getDemoUser();
       await prisma.inbodyHistory.create({
         data: {
           userId: user.id,
@@ -67,14 +66,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, data: result });
     }
 
-    const result = await parseWorkoutImage(file);
+    const result = await parseWorkoutImage(file, user.geminiApiKey);
     if (result.type === null || result.durationSeconds === null || result.activeCaloriesKcal === null) {
       return NextResponse.json(
         { success: false, error: "WORKOUT_REQUIRED_FIELDS_MISSING", data: result },
         { status: 422 },
       );
     }
-    const user = await getDemoUser();
     await prisma.workoutLog.create({
       data: {
         userId: user.id,
@@ -87,7 +85,7 @@ export async function POST(request: Request) {
           : null,
         avgHeartRateBpm: result.avgHeartRateBpm,
         activeCaloriesKcal: result.activeCaloriesKcal,
-        sourceProvider: "OPENAI_VISION",
+        sourceProvider: "GEMINI_VISION",
         isAiOcrInput: true,
         rawOcrData: fileMetadata,
       },

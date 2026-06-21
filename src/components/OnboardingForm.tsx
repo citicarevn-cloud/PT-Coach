@@ -125,7 +125,7 @@ function ModeButton({ active, onClick, icon: Icon, label }: { active: boolean; o
 }
 
 function friendlyError(code?: string): string {
-  if (code === "AI_NOT_CONFIGURED") return "OpenAI chưa được cấu hình trên máy chủ.";
+  if (code === "AI_NOT_CONFIGURED") return "Vui lòng vào mục Cài đặt (Settings) để nhập Gemini API Key trước khi sử dụng.";
   if (code === "INVALID_ONBOARDING_DATA") return "Một vài thông tin chưa hợp lệ. Hãy kiểm tra lại.";
   return "Chưa thể tạo kế hoạch. Vui lòng thử lại.";
 }
