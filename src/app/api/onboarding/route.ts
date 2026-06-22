@@ -43,11 +43,10 @@ export async function POST(request: Request) {
     });
     const plan = await generatePersonalizedPlan(input, user.geminiApiKey);
     const todayKey = getLocalDateKey();
-    const firstPlanDate = localDateKeyToUtc(todayKey);
 
     await prisma.$transaction(async (transaction) => {
       await transaction.workoutPlan.deleteMany({
-        where: { userId: user.id, date: { gte: firstPlanDate } },
+        where: { userId: user.id },
       });
       await transaction.user.update({
         where: { id: user.id },

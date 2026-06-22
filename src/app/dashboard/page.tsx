@@ -1,4 +1,4 @@
-import { CalendarCheck2, Flame, Gauge, Settings, Sparkles, Timer, Trophy } from "lucide-react";
+import { CalendarCheck2, Flame, Gauge, RefreshCw, Settings, Sparkles, Timer, Trophy } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import AICoachMessage from "@/components/AICoachMessage";
@@ -82,6 +82,10 @@ export default async function DashboardPage() {
       </header>
 
       <div className="mx-auto max-w-xl space-y-7 px-4 pt-6 sm:px-6">
+        <Link href="/onboarding?edit=true" className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-teal-200 bg-white px-4 text-sm font-extrabold text-teal-700 shadow-sm transition hover:border-teal-400 hover:bg-teal-50 focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:outline-none">
+          <RefreshCw size={18} /> Cập nhật / Tạo lại lộ trình
+        </Link>
+
         <section className="grid grid-cols-2 gap-3" aria-label="Chỉ số năng lượng">
           <MetricCard icon={Gauge} label="TDEE · Tổng tiêu hao" value={`${tdeeKcal.toLocaleString("vi-VN")} kcal`} note="Nền + sinh hoạt + vận động" color="teal" />
           <MetricCard icon={Flame} label="Mục tiêu vận động" value={`${(user.targetActiveKcal ?? 350).toLocaleString("vi-VN")} kcal`} note="Chỉ calories từ bài tập" color="orange" />

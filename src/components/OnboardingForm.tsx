@@ -7,7 +7,15 @@ import { friendlyApiError } from "@/utils/clientError";
 
 type InbodyMode = "photo" | "manual";
 
-export default function OnboardingForm() {
+interface OnboardingInitialValues {
+  age?: number | null;
+  height?: number | null;
+  weight?: number | null;
+  targetWeight?: number | null;
+  goal?: "LOSE_FAT" | "BUILD_MUSCLE" | "MAINTAIN_FITNESS" | null;
+}
+
+export default function OnboardingForm({ initialValues }: { initialValues?: OnboardingInitialValues }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<InbodyMode>("photo");
@@ -53,13 +61,13 @@ export default function OnboardingForm() {
           </div>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <NumberField name="age" label="Tuổi" min={16} max={100} placeholder="32" suffix="tuổi" />
-          <NumberField name="height" label="Chiều cao" min={120} max={230} step="0.1" placeholder="175" suffix="cm" />
-          <NumberField name="weight" label="Cân nặng" min={35} max={300} step="0.1" placeholder="77.6" suffix="kg" />
-          <NumberField name="targetWeight" label="Cân nặng mục tiêu" min={35} max={300} step="0.1" placeholder="69" suffix="kg" />
+          <NumberField name="age" label="Tuổi" min={16} max={100} placeholder="32" suffix="tuổi" defaultValue={initialValues?.age} />
+          <NumberField name="height" label="Chiều cao" min={120} max={230} step="0.1" placeholder="175" suffix="cm" defaultValue={initialValues?.height} />
+          <NumberField name="weight" label="Cân nặng" min={35} max={300} step="0.1" placeholder="77.6" suffix="kg" defaultValue={initialValues?.weight} />
+          <NumberField name="targetWeight" label="Cân nặng mục tiêu" min={35} max={300} step="0.1" placeholder="69" suffix="kg" defaultValue={initialValues?.targetWeight} />
           <label className="block">
             <span className="mb-2 block text-sm font-bold text-slate-700">Mục tiêu</span>
-            <select name="goal" required defaultValue="LOSE_FAT" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-100">
+            <select name="goal" required defaultValue={initialValues?.goal ?? "LOSE_FAT"} className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-100">
               <option value="LOSE_FAT">Giảm mỡ</option>
               <option value="BUILD_MUSCLE">Tăng cơ</option>
               <option value="MAINTAIN_FITNESS">Duy trì thể lực</option>
@@ -110,12 +118,12 @@ export default function OnboardingForm() {
   );
 }
 
-function NumberField({ name, label, min, max, step = "1", placeholder, suffix, required = true }: { name: string; label: string; min: number; max: number; step?: string; placeholder: string; suffix: string; required?: boolean }) {
+function NumberField({ name, label, min, max, step = "1", placeholder, suffix, required = true, defaultValue }: { name: string; label: string; min: number; max: number; step?: string; placeholder: string; suffix: string; required?: boolean; defaultValue?: number | null }) {
   return (
     <label className="block min-w-0">
       <span className="mb-2 block text-sm font-bold text-slate-700">{label}</span>
       <span className="relative block">
-        <input name={name} type="number" required={required} min={min} max={max} step={step} placeholder={placeholder} className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pr-11 text-sm font-semibold text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-100" />
+        <input name={name} type="number" required={required} min={min} max={max} step={step} placeholder={placeholder} defaultValue={defaultValue ?? undefined} className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pr-11 text-sm font-semibold text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-100" />
         <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold text-slate-400">{suffix}</span>
       </span>
     </label>
