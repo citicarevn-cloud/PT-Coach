@@ -27,7 +27,24 @@ const phaseSchema = z.object({
   message: "endWeek must be greater than or equal to startWeek",
 });
 
-const weeklyTemplateDaySchema = z.object({
+const exerciseDetailSchema = z.object({
+  name: z.string().trim().min(3).max(150),
+  durationMinutes: z.number().int().min(1).max(60),
+  sets: z.number().int().min(1).max(20).nullable().optional(),
+  reps: z.string().trim().min(1).max(50).nullable().optional(),
+  type: z.enum(["video_hubert", "custom"]),
+  illustrationUrl: z.string().url(),
+}).superRefine((exercise, context) => {
+  if (exercise.type === "video_hubert" && (exercise.durationMinutes < 15 || exercise.durationMinutes > 30)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["durationMinutes"],
+      message: "Hubert videos must be between 15 and 30 minutes",
+    });
+  }
+});
+
+export const weeklyTemplateDaySchema = z.object({
   dayNumber: z.number().int().min(1).max(7),
   dayLabel: z.string().trim().min(2).max(30),
   exerciseType: z.enum(["WALK", "RUN", "CYCLING", "STRENGTH", "HIIT", "REST", "OTHER"]),
@@ -35,6 +52,25 @@ const weeklyTemplateDaySchema = z.object({
   targetKcal: z.number().int().min(0).max(800),
   intensity: z.string().trim().min(2).max(100),
   aiAdvice: z.string().trim().min(8).max(500),
+  exercises: z.array(exerciseDetailSchema).max(10),
+}).superRefine((day, context) => {
+  const exerciseDuration = day.exercises.reduce((sum, exercise) => sum + exercise.durationMinutes, 0);
+  if (day.exerciseType === "REST") {
+    if (day.exercises.length > 0 || day.targetDuration !== 0) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["exercises"], message: "REST days must not contain exercises" });
+    }
+    return;
+  }
+  if (day.exercises.length === 0) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["exercises"], message: "Workout days require exercise details" });
+  }
+  if (exerciseDuration !== day.targetDuration) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["exercises"],
+      message: `Exercise duration ${exerciseDuration} must equal targetDuration ${day.targetDuration}`,
+    });
+  }
 });
 
 const nutritionSchema = z.object({
@@ -68,6 +104,7 @@ const aiRoadmapResponseSchema = z.object({
 
 export type OnboardingInput = z.infer<typeof onboardingInputSchema>;
 export type RoadmapPhase = z.infer<typeof phaseSchema>;
+export type ExerciseDetail = z.infer<typeof exerciseDetailSchema>;
 export type WeeklyTemplateDay = z.infer<typeof weeklyTemplateDaySchema>;
 export type NutritionTargets = z.infer<typeof nutritionSchema>;
 
@@ -259,10 +296,19 @@ function buildRoadmapPrompt(input: OnboardingInput, baseline: ReturnType<typeof 
           targetKcal: "workout kcal; 0 on REST",
           intensity: "Vietnamese intensity/RPE",
           aiAdvice: "Vietnamese string",
+          exercises: [{
+            name: "Tên bài tập hoặc tên video",
+            durationMinutes: "integer minutes",
+            sets: "integer or null",
+            reps: "string or null, e.g. 10-12",
+            type: "video_hubert|custom",
+            illustrationUrl: "https://www.youtube.com/results?search_query=Hubert+Cu+targeted+muscle+group",
+          }],
         }],
         aiSummary: "Vietnamese roadmap summary",
       },
     }),
+    "CRITICAL: For the daily workout details, provide a specific list of exercises. The user explicitly requests workouts from the Vietnamese fitness YouTuber 'Hubert Cù'. Rule for Duration Matching: Hubert's videos are usually 15 to 30 minutes long. If you suggest a 60-minute daily workout, YOU MUST NOT just suggest one 20-minute video. YOU MUST combine them (e.g., 30 min Full Body HIIT + 15 min Abs + 15 min Cool down) so the durationMinutes of all exercises sum up to the daily total. For illustrationUrl, generate a valid YouTube search URL combining 'Hubert Cu' and the targeted muscle group.",
     "OUTPUT RAW JSON ONLY. NO MARKDOWN, NO GREETINGS.",
     "CRITICAL RULE: DO NOT OUTPUT ANY MARKDOWN, NO CONVERSATIONAL TEXT, NO BACKTICKS. OUTPUT ONLY A RAW, VALID JSON OBJECT STARTING WITH { AND ENDING WITH }.",
   ].join(" ");
@@ -288,12 +334,19 @@ function normalizePhases(
 }
 
 function normalizeWeeklyDay(day: WeeklyTemplateDay): WeeklyTemplateDay {
-  if (day.exerciseType === "REST") return { ...day, targetDuration: 0, targetKcal: 0 };
+  if (day.exerciseType === "REST") return { ...day, targetDuration: 0, targetKcal: 0, exercises: [] };
   return {
     ...day,
-    targetDuration: clamp(day.targetDuration, 10, 90),
+    targetDuration: clamp(day.targetDuration, 10, 120),
     targetKcal: clamp(day.targetKcal, 80, 600),
+    exercises: day.exercises.map((exercise) => exercise.type === "video_hubert"
+      ? { ...exercise, illustrationUrl: createHubertSearchUrl(exercise.name) }
+      : exercise),
   };
+}
+
+function createHubertSearchUrl(exerciseName: string): string {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`Hubert Cu ${exerciseName}`)}`;
 }
 
 function getDirection(currentWeight: number, targetWeight: number): "LOSE" | "GAIN" | "MAINTAIN" {

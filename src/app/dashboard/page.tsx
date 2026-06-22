@@ -2,6 +2,7 @@ import { CalendarCheck2, Flame, Gauge, Settings, Sparkles, Timer, Trophy } from 
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import AICoachMessage from "@/components/AICoachMessage";
+import ExerciseBreakdown from "@/components/ExerciseBreakdown";
 import HabitChecklist from "@/components/HabitChecklist";
 import MealPlanList from "@/components/MealPlanList";
 import ProgressRings from "@/components/ProgressRings";
@@ -13,7 +14,7 @@ import { generateVietnameseMenu } from "@/domain/menu";
 import { addCalendarDays, getCurrentWeekDateKeys, getLocalDateKey, getLocalDayRange, localDateKeyToUtc } from "@/lib/dates";
 import { getDemoUser } from "@/lib/demoUser";
 import { prisma } from "@/lib/prisma";
-import type { NutritionTargets, RoadmapPhase, WeeklyTemplateDay } from "@/services/onboardingService";
+import type { ExerciseDetail, NutritionTargets, RoadmapPhase, WeeklyTemplateDay } from "@/services/onboardingService";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export default async function DashboardPage() {
           <div className="relative">
             <div className="flex items-center justify-between"><p className="text-xs font-extrabold tracking-[0.18em] text-orange-300 uppercase">Nhiệm vụ hôm nay</p><CalendarCheck2 size={21} className="text-orange-400" /></div>
             <h2 id="mission-title" className="mt-3 text-2xl font-black">{todayPlan ? activityLabel(todayPlan.exerciseType) : "Chưa có lịch cho hôm nay"}</h2>
-            {todayPlan ? <><div className="mt-4 flex flex-wrap gap-2"><MissionPill icon={Timer} text={`${todayPlan.targetDuration} phút`} /><MissionPill icon={Flame} text={`Mục tiêu ${todayPlan.targetKcal} kcal`} /></div><p className="mt-4 border-l-2 border-teal-400 pl-3 text-sm leading-relaxed text-slate-300">{todayPlan.aiAdvice}</p></> : <p className="mt-3 text-sm text-slate-400">Hãy tạo lại kế hoạch khi chu kỳ 7 ngày kết thúc.</p>}
+            {todayPlan ? <><div className="mt-4 flex flex-wrap gap-2"><MissionPill icon={Timer} text={`${todayPlan.targetDuration} phút`} /><MissionPill icon={Flame} text={`Mục tiêu ${todayPlan.targetKcal} kcal`} /></div><p className="mt-4 border-l-2 border-teal-400 pl-3 text-sm leading-relaxed text-slate-300">{todayPlan.aiAdvice}</p><ExerciseBreakdown exercises={Array.isArray(todayPlan.exercises) ? todayPlan.exercises as unknown as ExerciseDetail[] : []} /></> : <p className="mt-3 text-sm text-slate-400">Hãy tạo lại kế hoạch khi chu kỳ 7 ngày kết thúc.</p>}
           </div>
         </section>
 

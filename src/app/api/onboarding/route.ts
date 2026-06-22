@@ -116,6 +116,7 @@ export async function POST(request: Request) {
           targetDuration: day.targetDuration,
           targetKcal: day.targetKcal,
           aiAdvice: day.aiAdvice,
+          exercises: day.exercises,
         })),
       });
     });

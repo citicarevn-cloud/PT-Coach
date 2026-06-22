@@ -14,6 +14,7 @@ import {
   calculateBaselineMetrics,
   generatePersonalizedPlan,
   type OnboardingInput,
+  weeklyTemplateDaySchema,
 } from "../src/services/onboardingService.js";
 
 const profile: OnboardingInput = {
@@ -60,10 +61,45 @@ describe("onboarding plan service", () => {
       dayNumber: index + 1,
       dayLabel: `Ngày ${index + 1}`,
       exerciseType: index === 6 ? "REST" : "WALK",
-      targetDuration: index === 0 ? 120 : 40,
+      targetDuration: index === 6 ? 0 : index === 0 ? 60 : 40,
       targetKcal: index === 0 ? 800 : 300,
       intensity: index === 6 ? "Phục hồi" : "RPE 5-6",
       aiAdvice: "Duy trì nhịp độ vừa phải và chú ý phục hồi.",
+      exercises: index === 6 ? [] : index === 0 ? [
+        {
+          name: "30 phút Full Body HIIT",
+          durationMinutes: 30,
+          sets: null,
+          reps: null,
+          type: "video_hubert",
+          illustrationUrl: "https://www.youtube.com/results?search_query=Hubert+Cu+Full+Body",
+        },
+        {
+          name: "30 phút Cardio đốt mỡ",
+          durationMinutes: 30,
+          sets: null,
+          reps: null,
+          type: "video_hubert",
+          illustrationUrl: "https://www.youtube.com/results?search_query=Hubert+Cu+Cardio",
+        },
+      ] : [
+        {
+          name: "25 phút tập toàn thân",
+          durationMinutes: 25,
+          sets: null,
+          reps: null,
+          type: "video_hubert",
+          illustrationUrl: "https://www.youtube.com/results?search_query=Hubert+Cu+Toan+Than",
+        },
+        {
+          name: "Giãn cơ và thả lỏng",
+          durationMinutes: 15,
+          sets: 1,
+          reps: "liên tục",
+          type: "custom",
+          illustrationUrl: "https://www.youtube.com/results?search_query=Gian+co",
+        },
+      ],
     }));
     const phases = [1, 2, 3].map((phaseNumber) => ({
       phaseNumber,
@@ -100,7 +136,10 @@ describe("onboarding plan service", () => {
       goalAnalysis: { estimatedWeeks: 15, targetWeight: 69 },
       nutrition: { targetCaloriesKcal: 1956, proteinGrams: 155 },
     });
-    expect(result.weeklyTemplate[0]).toMatchObject({ targetDuration: 90, targetKcal: 600 });
+    expect(result.weeklyTemplate[0]).toMatchObject({ targetDuration: 60, targetKcal: 600 });
+    expect(result.weeklyTemplate[0].exercises).toHaveLength(2);
+    expect(result.weeklyTemplate[0].exercises.reduce((sum, exercise) => sum + exercise.durationMinutes, 0)).toBe(60);
+    expect(result.weeklyTemplate[0].exercises[0]?.illustrationUrl).toContain("youtube.com/results?search_query=Hubert%20Cu");
     expect(result.weeklyTemplate[6]).toMatchObject({ exerciseType: "REST", targetDuration: 0, targetKcal: 0 });
     expect(result.phases.at(-1)).toMatchObject({ endWeek: 15, targetWeightEnd: 69 });
     expect(geminiMocks.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({
@@ -111,6 +150,8 @@ describe("onboarding plan service", () => {
     }));
     const prompt = geminiMocks.generateContent.mock.calls[0]?.[0];
     expect(prompt).toBeTypeOf("string");
+    expect(prompt).toContain("Hubert Cù");
+    expect(prompt).toContain("durationMinutes of all exercises sum up to the daily total");
     expect(prompt).toMatch(/CRITICAL RULE: DO NOT OUTPUT ANY MARKDOWN.*ENDING WITH \}\.$/);
   });
 
@@ -121,5 +162,27 @@ describe("onboarding plan service", () => {
       code: "AI_INVALID_RESPONSE",
       message: "Dữ liệu trả về không đúng định dạng JSON.",
     });
+  });
+
+  it("rejects a 60-minute day when exercise details cover only 20 minutes", () => {
+    const result = weeklyTemplateDaySchema.safeParse({
+      dayNumber: 1,
+      dayLabel: "Thứ 2",
+      exerciseType: "HIIT",
+      targetDuration: 60,
+      targetKcal: 450,
+      intensity: "RPE 7",
+      aiAdvice: "Giữ form chuẩn và nghỉ ngắn giữa các video.",
+      exercises: [{
+        name: "20 phút HIIT",
+        durationMinutes: 20,
+        sets: null,
+        reps: null,
+        type: "video_hubert",
+        illustrationUrl: "https://www.youtube.com/results?search_query=Hubert+Cu+HIIT",
+      }],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.some((issue) => issue.message.includes("must equal targetDuration"))).toBe(true);
   });
 });
