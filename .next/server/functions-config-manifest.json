@@ -1,7 +1,14 @@
 {
   "version": 1,
   "functions": {
-    "/api/onboarding": {},
-    "/api/upload": {}
+    "/api/coach/analyze": {
+      "maxDuration": 60
+    },
+    "/api/onboarding": {
+      "maxDuration": 60
+    },
+    "/api/upload": {
+      "maxDuration": 60
+    }
   }
 }

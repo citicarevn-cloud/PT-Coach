@@ -3,8 +3,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 export const GEMINI_KEY_REQUIRED_MESSAGE =
   "Chưa cài đặt Gemini API Key";
 
-export const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
-export const GEMINI_VISION_MODEL = "gemini-2.5-flash";
+export const GEMINI_TEXT_MODEL = "gemini-1.5-flash";
+export const GEMINI_VISION_MODEL = "gemini-1.5-flash";
 
 export class GeminiClientError extends Error {
   constructor(

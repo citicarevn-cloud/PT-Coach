@@ -152,6 +152,7 @@ describe("onboarding plan service", () => {
     expect(prompt).toBeTypeOf("string");
     expect(prompt).toContain("Hubert Cù");
     expect(prompt).toContain("durationMinutes of all exercises sum up to the daily total");
+    expect(prompt).toContain("Respond IMMEDIATELY with the JSON object");
     expect(prompt).toMatch(/CRITICAL RULE: DO NOT OUTPUT ANY MARKDOWN.*ENDING WITH \}\.$/);
   });
 

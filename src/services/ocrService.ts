@@ -95,7 +95,7 @@ async function analyzeImage(file: File, geminiApiKey: string | null | undefined,
         maxOutputTokens: 500,
       },
     });
-    const fullPrompt = `Bạn là hệ thống OCR dữ liệu sức khỏe và vận động. Chỉ đọc dữ liệu nhìn thấy rõ trong ảnh. ${prompt} OUTPUT RAW JSON ONLY. NO MARKDOWN, NO GREETINGS.`;
+    const fullPrompt = `Bạn là hệ thống OCR dữ liệu sức khỏe và vận động. Chỉ đọc dữ liệu nhìn thấy rõ trong ảnh. ${prompt} Respond IMMEDIATELY with the JSON object. Do not format with markdown blocks if it slows down generation. Prioritize speed. OUTPUT RAW JSON ONLY. NO MARKDOWN, NO GREETINGS.`;
     const result = await model.generateContent([{ text: fullPrompt }, ...imageParts]);
     const content = result.response.text().trim();
     if (!content) {

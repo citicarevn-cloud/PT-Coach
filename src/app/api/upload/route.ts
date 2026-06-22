@@ -1,3 +1,5 @@
+export const maxDuration = 60;
+
 import { NextResponse } from "next/server";
 import { getDemoUser } from "../../../lib/demoUser";
 import { prisma } from "../../../lib/prisma";
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
       mimeType: file.type,
       sizeBytes: file.size,
       provider: "gemini-vision",
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
     };
 
     if (uploadType === "inbody") {

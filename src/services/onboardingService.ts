@@ -309,6 +309,7 @@ function buildRoadmapPrompt(input: OnboardingInput, baseline: ReturnType<typeof 
       },
     }),
     "CRITICAL: For the daily workout details, provide a specific list of exercises. The user explicitly requests workouts from the Vietnamese fitness YouTuber 'Hubert Cù'. Rule for Duration Matching: Hubert's videos are usually 15 to 30 minutes long. If you suggest a 60-minute daily workout, YOU MUST NOT just suggest one 20-minute video. YOU MUST combine them (e.g., 30 min Full Body HIIT + 15 min Abs + 15 min Cool down) so the durationMinutes of all exercises sum up to the daily total. For illustrationUrl, generate a valid YouTube search URL combining 'Hubert Cu' and the targeted muscle group.",
+    "Respond IMMEDIATELY with the JSON object. Do not format with markdown blocks if it slows down generation. Prioritize speed.",
     "OUTPUT RAW JSON ONLY. NO MARKDOWN, NO GREETINGS.",
     "CRITICAL RULE: DO NOT OUTPUT ANY MARKDOWN, NO CONVERSATIONAL TEXT, NO BACKTICKS. OUTPUT ONLY A RAW, VALID JSON OBJECT STARTING WITH { AND ENDING WITH }.",
   ].join(" ");

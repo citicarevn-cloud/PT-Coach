@@ -38,13 +38,14 @@ describe("Gemini Vision OCR service", () => {
     })}\n\`\`\``);
     await expect(parseInbodyImage(mockImage(), "test-key")).resolves.toMatchObject({ weightKg: 77.6, bmrKcal: 1661 });
     expect(geminiMocks.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       generationConfig: expect.objectContaining({ responseMimeType: "application/json" }),
     }));
     expect(geminiMocks.generateContent).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ inlineData: expect.objectContaining({ mimeType: "image/png" }) }),
     ]));
     const contentParts = geminiMocks.generateContent.mock.calls[0]?.[0] as Array<{ text?: string }>;
+    expect(contentParts[0]?.text).toContain("Respond IMMEDIATELY with the JSON object");
     expect(contentParts[0]?.text).toMatch(/OUTPUT RAW JSON ONLY\. NO MARKDOWN, NO GREETINGS\.$/);
   });
 

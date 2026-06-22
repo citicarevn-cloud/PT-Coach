@@ -49,7 +49,7 @@ describe("Gemini AI Coach service", () => {
 
     await expect(analyzeWorkoutSession(walkSession, "test-gemini-key")).resolves.toBe("Phân tích từ Gemini");
     expect(geminiMocks.getGenerativeModel).toHaveBeenCalledWith(expect.objectContaining({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
     }));
     expect(geminiMocks.generateContent).toHaveBeenCalledWith(expect.stringContaining("Đi bộ 6,21 km"));
   });
