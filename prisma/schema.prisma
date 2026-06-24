@@ -53,6 +53,9 @@ model User {
   targetActiveKcal       Int? // Daily calories targeted from planned exercise only
   hasCompletedOnboarding Boolean          @default(false)
   geminiApiKey           String?
+  openaiApiKey            String?
+  groqApiKey              String?
+  preferredAi             String           @default("gemini")
   heightCm               Float?
   targetWeightKg         Float?
   targetDate             DateTime?

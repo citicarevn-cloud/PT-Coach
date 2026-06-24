@@ -1,6 +1,9 @@
 import { z } from "zod";
-import { GeminiClientError, generateGeminiText } from "./geminiClient";
-import { extractAndParseJSON } from "../utils/aiHelper";
+import type { User } from "@prisma/client";
+import {
+  AiFallbackServiceError,
+  generateFitnessPlanWithFallback,
+} from "../utils/aiFallbackService";
 
 export const onboardingInputSchema = z.object({
   age: z.number().int().min(16).max(100),
@@ -191,34 +194,27 @@ export function calculateBaselineMetrics(input: OnboardingInput) {
 
 export async function generatePersonalizedPlan(
   input: OnboardingInput,
-  geminiApiKey: string | null | undefined,
+  aiUser: Pick<User, "geminiApiKey" | "openaiApiKey" | "groqApiKey" | "preferredAi"> | string | null | undefined,
 ): Promise<PersonalizedRoadmap> {
   const validatedInput = onboardingInputSchema.parse(input);
   const baseline = calculateBaselineMetrics(validatedInput);
-  let content: string;
+  let parsed: unknown;
 
   try {
-    content = await generateGeminiText({
-      apiKey: geminiApiKey,
-      json: true,
-      temperature: 0.25,
-      maxOutputTokens: 8_192,
-      prompt: buildRoadmapPrompt(validatedInput, baseline),
-    });
+    parsed = await generateFitnessPlanWithFallback(
+      buildRoadmapPrompt(validatedInput, baseline),
+      normalizeAiUser(aiUser),
+    );
   } catch (error) {
-    if (error instanceof GeminiClientError && error.code === "GEMINI_KEY_REQUIRED") {
+    if (error instanceof AiFallbackServiceError && error.code === "AI_NOT_CONFIGURED") {
       throw new OnboardingServiceError("AI_NOT_CONFIGURED", error.message, { cause: error });
     }
-    throw new OnboardingServiceError("AI_PROVIDER_ERROR", "Không thể kết nối tới Gemini để tạo lộ trình.", { cause: error });
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = extractAndParseJSON(content);
-  } catch (error) {
+    if (error instanceof AiFallbackServiceError && error.code === "AI_INVALID_RESPONSE") {
+      throw new OnboardingServiceError("AI_INVALID_RESPONSE", error.message, { cause: error });
+    }
     throw new OnboardingServiceError(
-      "AI_INVALID_RESPONSE",
-      "Dữ liệu trả về không đúng định dạng JSON.",
+      "AI_PROVIDER_ERROR",
+      "Không thể kết nối tới các nhà cung cấp AI để tạo lộ trình.",
       { cause: error },
     );
   }
@@ -243,6 +239,20 @@ export async function generatePersonalizedPlan(
       .map(normalizeWeeklyDay),
     aiSummary: result.data.aiSummary,
   };
+}
+
+function normalizeAiUser(
+  aiUser: Pick<User, "geminiApiKey" | "openaiApiKey" | "groqApiKey" | "preferredAi"> | string | null | undefined,
+): Pick<User, "geminiApiKey" | "openaiApiKey" | "groqApiKey" | "preferredAi"> {
+  if (typeof aiUser === "string" || aiUser == null) {
+    return {
+      geminiApiKey: aiUser ?? null,
+      openaiApiKey: null,
+      groqApiKey: null,
+      preferredAi: "gemini",
+    };
+  }
+  return aiUser;
 }
 
 function buildRoadmapPrompt(input: OnboardingInput, baseline: ReturnType<typeof calculateBaselineMetrics>): string {

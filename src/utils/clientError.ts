@@ -10,7 +10,7 @@ export function friendlyApiError(
     return "AI chưa đọc đủ dữ liệu trong ảnh. Hãy dùng ảnh rõ hơn hoặc nhập Inbody thủ công.";
   }
   if (code === "AI_NOT_CONFIGURED" || code === "OCR_NOT_CONFIGURED" || code === "GEMINI_KEY_REQUIRED") {
-    return "Chưa cài đặt Gemini API Key. Hãy mở Settings để thêm khóa trước khi sử dụng AI.";
+    return "Chưa cài đặt AI API Key. Hãy mở Settings để thêm Gemini, OpenAI hoặc Groq key trước khi sử dụng AI.";
   }
   if (code === "AI_PROVIDER_ERROR" || code === "OCR_PROVIDER_ERROR" || code === "GEMINI_PROVIDER_ERROR") {
     return "Gemini đang tạm thời không phản hồi. Hãy kiểm tra API key, quota rồi thử lại.";

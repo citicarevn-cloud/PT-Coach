@@ -16,17 +16,24 @@ export default async function SettingsPage() {
         <header className="py-8">
           <div className="flex h-13 w-13 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-lg shadow-teal-600/20"><KeyRound size={24} /></div>
           <p className="mt-5 text-xs font-extrabold tracking-[0.18em] text-teal-700 uppercase">Cài đặt AI</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Kết nối Google Gemini</h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">Cập nhật khóa dùng riêng cho tài khoản của bạn. Giá trị đầy đủ không bao giờ được hiển thị lại trên giao diện.</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Kết nối Multi-AI</h1>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">Cập nhật khóa Gemini, ChatGPT/OpenAI và Groq cho tài khoản của bạn. App sẽ ưu tiên lựa chọn bạn chọn, rồi tự fallback sang provider còn khóa khi quota hoặc timeout.</p>
         </header>
-        <SettingsForm maskedKey={maskApiKey(user.geminiApiKey)} />
-        <div className="mt-4 flex items-start gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800"><ShieldCheck size={17} className="mt-0.5 shrink-0" /><p>Khóa hiện được lưu trong database để đáp ứng cấu hình tài khoản. Hãy giới hạn quota và API restrictions trong Google AI Studio.</p></div>
+        <SettingsForm
+          maskedKeys={{
+            gemini: maskApiKey(user.geminiApiKey),
+            openai: maskApiKey(user.openaiApiKey),
+            groq: maskApiKey(user.groqApiKey),
+          }}
+          preferredAi={user.preferredAi}
+        />
+        <div className="mt-4 flex items-start gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800"><ShieldCheck size={17} className="mt-0.5 shrink-0" /><p>Khóa hiện được lưu trong database để đáp ứng cấu hình theo tài khoản. Hãy giới hạn quota và bật API restrictions ở từng nhà cung cấp để an toàn hơn.</p></div>
       </div>
     </main>
   );
 }
 
-function maskApiKey(apiKey: string | null): string | null {
+function maskApiKey(apiKey: string | null | undefined): string | null {
   if (!apiKey) return null;
   if (apiKey.length <= 10) return `${apiKey.slice(0, 3)}••••`;
   return `${apiKey.slice(0, 6)}••••••••${apiKey.slice(-4)}`;

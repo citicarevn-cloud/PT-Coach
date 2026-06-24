@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       muscleMassKg: ocrData?.muscleMassKg ?? manualMuscleMass,
       boneMassKg: ocrData?.boneMassKg ?? manualBoneMass,
     });
-    const plan = await generatePersonalizedPlan(input, user.geminiApiKey);
+    const plan = await generatePersonalizedPlan(input, user);
     const todayKey = getLocalDateKey();
 
     await prisma.$transaction(async (transaction) => {
