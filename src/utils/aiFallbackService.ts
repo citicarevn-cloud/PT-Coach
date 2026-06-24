@@ -101,7 +101,7 @@ async function generateWithOpenAI(prompt: string, apiKey: string): Promise<strin
       messages: [
         {
           role: "system",
-          content: "Bạn là AI Fitness Coach. Chỉ trả về một JSON object hợp lệ, không markdown, không giải thích ngoài JSON.",
+          content: "Bạn là AI Fitness Coach. Chỉ trả về một JSON object hợp lệ. Return ONLY the raw JSON object. Do not wrap it in markdown code blocks like ```json ... ```. Không giải thích ngoài JSON.",
         },
         { role: "user", content: prompt },
       ],
@@ -124,7 +124,7 @@ async function generateWithGroq(prompt: string, apiKey: string): Promise<string>
       messages: [
         {
           role: "system",
-          content: "You are a fitness planning engine. Return raw valid JSON only. No markdown, no greetings, no commentary.",
+          content: "You are a fitness planning engine. Return ONLY the raw valid JSON object. Do not wrap it in markdown code blocks like ```json ... ```. No greetings, no commentary.",
         },
         { role: "user", content: prompt },
       ],
