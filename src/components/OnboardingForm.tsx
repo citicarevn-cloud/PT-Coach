@@ -3,7 +3,6 @@
 import { Activity, Camera, Check, ChevronRight, Dumbbell, LoaderCircle, Scale, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { friendlyApiError } from "@/utils/clientError";
 
 type InbodyMode = "photo" | "manual";
 
@@ -37,9 +36,9 @@ export default function OnboardingForm({ initialValues }: { initialValues?: Onbo
 
     try {
       const response = await fetch("/api/onboarding", { method: "POST", body: formData });
-      const payload = await response.json() as { success?: boolean; message?: string; error?: string };
+      const payload = await response.json() as { success?: boolean; message?: string; error?: string; code?: string };
       if (!response.ok || !payload.success) {
-        throw new Error(friendlyApiError(payload.error, payload.message, "Chưa thể tạo kế hoạch. Vui lòng thử lại."));
+        throw new Error(payload.error || payload.message || "Lỗi không xác định");
       }
       router.replace("/dashboard");
       router.refresh();

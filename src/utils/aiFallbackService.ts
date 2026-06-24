@@ -37,16 +37,19 @@ export async function generateFitnessPlanWithFallback(prompt: string, user: AiUs
       return extractAndParseJSON(rawText);
     } catch (error) {
       failures.push({ provider, error });
-      console.error(`[AI fallback] ${provider} failed, trying next provider if available.`, error);
+      console.error(`[AI_FALLBACK] Provider ${provider} FAILED. Reason:`, getErrorMessage(error));
     }
   }
 
   const hasInvalidJson = failures.some(({ error }) => error instanceof Error && error.message.includes("JSON"));
+  const failureSummary = failures
+    .map(({ provider, error }) => `${provider}: ${getErrorMessage(error)}`)
+    .join(" | ");
   throw new AiFallbackServiceError(
     hasInvalidJson ? "AI_INVALID_RESPONSE" : "AI_PROVIDER_ERROR",
     hasInvalidJson
       ? "Dữ liệu trả về không đúng định dạng JSON."
-      : "Tất cả nhà cung cấp AI khả dụng đều đang lỗi hoặc hết quota. Vui lòng thử lại sau.",
+      : `Tất cả nhà cung cấp AI khả dụng đều đang lỗi hoặc hết quota. Chi tiết: ${failureSummary}`,
     { cause: failures.at(-1)?.error },
   );
 }
@@ -117,7 +120,7 @@ async function generateWithGroq(prompt: string, apiKey: string): Promise<string>
   const client = new Groq({ apiKey });
   const response = await withTimeout(
     client.chat.completions.create({
-      model: "llama-3.1-70b-versatile",
+      model: "llama-3.1-8b-instant",
       messages: [
         {
           role: "system",
@@ -134,6 +137,16 @@ async function generateWithGroq(prompt: string, apiKey: string): Promise<string>
   const text = response.choices[0]?.message?.content?.trim();
   if (!text) throw new Error("Groq không trả về nội dung.");
   return text;
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown AI provider error";
+  }
 }
 
 function requireKey(apiKey: string | null | undefined, providerName: string): string {

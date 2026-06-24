@@ -132,10 +132,13 @@ export async function POST(request: Request) {
     }
     if (error instanceof OcrServiceError || error instanceof OnboardingServiceError) {
       const status = error.code.endsWith("NOT_CONFIGURED") ? 503 : error.code.includes("PROVIDER") ? 502 : 422;
-      return NextResponse.json({ success: false, error: error.code, message: error.message }, { status });
+      return NextResponse.json({ success: false, error: error.message, code: error.code, message: error.message }, { status });
     }
     console.error("Onboarding failed.", error);
-    return NextResponse.json({ success: false, error: "ONBOARDING_FAILED" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : "ONBOARDING_FAILED" },
+      { status: 500 },
+    );
   }
 }
 
